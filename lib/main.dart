@@ -13,7 +13,7 @@ void main() async {
     theme: ThemeData(
       primarySwatch: Colors.blue,
     ),
-    home: MyApp(),
+    home: const MyApp(),
   ));
 }
 
@@ -47,6 +47,8 @@ class GameAdapter extends TypeAdapter<Game> {
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+  
   @override
   MyAppState createState() => MyAppState();
 }
@@ -69,7 +71,7 @@ class MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('MediaMaster'),
+        title: const Text('MediaMaster'),
       ),
       body: Row(
         children: [
@@ -92,7 +94,7 @@ class MyAppState extends State<MyApp> {
                           });
                         },
                         trailing: IconButton(
-                          icon: Icon(Icons.delete),
+                          icon: const Icon(Icons.delete),
                           onPressed: () {
                             _showDeleteConfirmationDialog(context, index);
                           },
@@ -120,7 +122,7 @@ class MyAppState extends State<MyApp> {
                 child: Center(
                   child: Text(
                     gameBox.isNotEmpty ? gameBox.getAt(selectedGameIndex)!.name : '',
-                    style: TextStyle(color: Colors.white, fontSize: 24.0),
+                    style: const TextStyle(color: Colors.white, fontSize: 24.0),
                   ),
                 ),
               ),
@@ -133,7 +135,7 @@ class MyAppState extends State<MyApp> {
           _showSearchGameDialog(context);
         },
         tooltip: 'Search Game',
-        child: Icon(Icons.search),
+        child: const Icon(Icons.search),
       ),
     );
   }
@@ -150,8 +152,8 @@ class MyAppState extends State<MyApp> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
-              title: Text('Search for a Game'),
-              content: Container(
+              title: const Text('Search for a Game'),
+              content: SizedBox(
                 height: noSearch ? 100 : 150, // Set height based on the presence of search results
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -161,7 +163,7 @@ class MyAppState extends State<MyApp> {
                       decoration: InputDecoration(
                         labelText: 'Game Name',
                         suffixIcon: IconButton(
-                          icon: Icon(Icons.search),
+                          icon: const Icon(Icons.search),
                           onPressed: () async {
                             String query = searchController.text;
                             if (query.isNotEmpty) {
@@ -179,7 +181,7 @@ class MyAppState extends State<MyApp> {
                         child: SingleChildScrollView(
                           child: Column(
                             children: [
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               ...searchResults.map((result) {
                                 String gameName = result['title'];
                                 return ListTile(
@@ -189,7 +191,7 @@ class MyAppState extends State<MyApp> {
                                     Navigator.of(context).pop();
                                   },
                                 );
-                              }).toList(),
+                              }),
                             ],
                           ),
                         ),
@@ -228,7 +230,7 @@ class MyAppState extends State<MyApp> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Select a Game'),
+          title: const Text('Select a Game'),
           content: SingleChildScrollView(
             child: Column(
               children: searchResults.map((result) {
@@ -262,14 +264,14 @@ class MyAppState extends State<MyApp> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Delete Game'),
-          content: Text('Are you sure you want to delete this game?'),
+          title: const Text('Delete Game'),
+          content: const Text('Are you sure you want to delete this game?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
@@ -279,7 +281,7 @@ class MyAppState extends State<MyApp> {
                 });
                 Navigator.of(context).pop();
               },
-              child: Text('Delete'),
+              child: const Text('Delete'),
             ),
           ],
         );
