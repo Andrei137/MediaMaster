@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'Utils.dart';
 
 void main() async {
   await Hive.initFlutter();
@@ -67,6 +68,30 @@ class MyAppState extends State<MyApp> {
     gameBox = Hive.box<Game>('games');
   }
 
+  ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _)
+  {
+    return ListView.builder(
+      itemCount: box.length,
+      itemBuilder: (context, index) {
+        final game = box.getAt(index)!;
+        return ListTile(
+          title: Text(game.name),
+          onTap: () {
+            setState(() {
+              selectedGameIndex = index;
+            });
+          },
+          trailing: IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () {
+              _showDeleteConfirmationDialog(context, index);
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,43 +101,22 @@ class MyAppState extends State<MyApp> {
       body: Row(
         children: [
           Expanded(
-            flex: 1,
+            flex: 3,
             child: Container(
               color: Colors.grey[200],
               child: ValueListenableBuilder(
                 valueListenable: gameBox.listenable(),
-                builder: (context, Box<Game> box, _) {
-                  return ListView.builder(
-                    itemCount: box.length,
-                    itemBuilder: (context, index) {
-                      final game = box.getAt(index)!;
-                      return ListTile(
-                        title: Text(game.name),
-                        onTap: () {
-                          setState(() {
-                            selectedGameIndex = index;
-                          });
-                        },
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () {
-                            _showDeleteConfirmationDialog(context, index);
-                          },
-                        ),
-                      );
-                    },
-                  );
-                },
+                builder: mediaListBuilder,
               ),
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 10,
             child: Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
                   image: NetworkImage(
-                      gameBox.isNotEmpty ? gameBox.getAt(selectedGameIndex)!.backgroundImage : placeholderImageUrl
+                    gameBox.isNotEmpty ? gameBox.getAt(selectedGameIndex)!.backgroundImage : placeholderImageUrl
                   ),
                   fit: BoxFit.cover,
                 ),
@@ -134,9 +138,10 @@ class MyAppState extends State<MyApp> {
         onPressed: () {
           _showSearchGameDialog(context);
         },
-        tooltip: 'Search Game',
-        child: const Icon(Icons.search),
+        tooltip: 'Add Game to Library',
+        child: const Icon(Icons.download),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 
@@ -207,8 +212,9 @@ class MyAppState extends State<MyApp> {
   }
 
   Future<List<dynamic>> _searchGame(String query) async {
+
     final String url =
-        'https://www.pcgamingwiki.com/w/api.php?action=query&format=json&list=search&srsearch=$query';
+        'https://www.pcgamingwiki.com/w/api.php?action=query&format=json&list=search&srsearch=${Utils.httpify(query)}';
 
     try {
       final http.Response response = await http.get(Uri.parse(url));
@@ -223,31 +229,6 @@ class MyAppState extends State<MyApp> {
       print('Error searching game: $error');
       return [];
     }
-  }
-
-  Future<void> _showSearchResultsDialog(BuildContext context, List<dynamic> searchResults) async {
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Select a Game'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: searchResults.map((result) {
-                String gameName = result['title'];
-                return ListTile(
-                  title: Text(gameName),
-                  onTap: () {
-                    _addGame(gameName);
-                    Navigator.of(context).pop();
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _addGame(String gameName) async {
