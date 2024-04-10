@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'Utils.dart';
+import 'utils.dart';
 
 void main() async {
   await Hive.initFlutter();

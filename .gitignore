@@ -47,3 +47,5 @@ app.*.map.json
 *macos
 *ios
 *android
+
+lib/API/constants.dart
