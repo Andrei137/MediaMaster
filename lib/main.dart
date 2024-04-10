@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'Utils.dart';
@@ -57,6 +59,8 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> {
   late Box<Game> gameBox;
   int selectedGameIndex = 0;
+  String filterQuery = "";
+  TextEditingController searchController = TextEditingController();
 
   // Placeholder image URL
   static const String placeholderImageUrl =
@@ -70,30 +74,64 @@ class MyAppState extends State<MyApp> {
 
   ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _)
   {
-    return ListView.builder(
-      itemCount: box.length,
-      itemBuilder: (context, index) {
-        final game = box.getAt(index)!;
-        return ListTile(
-          title: Text(game.name),
-          onTap: () {
-            setState(() {
-              selectedGameIndex = index;
-            });
-          },
-          trailing: IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () {
-              _showDeleteConfirmationDialog(context, index);
+    List<ListTile> listTiles = List.from([]);
+    setSearchText();
+
+    for(int i = 0;i < box.length;++i) {
+      final game = box.getAt(i)!;
+      if(game.name.toLowerCase().contains(filterQuery)) {
+        listTiles.add(
+          ListTile(
+            title: Text(game.name),
+            onTap: () {
+              setState(() {
+                selectedGameIndex = i;
+              });
             },
+            trailing: IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () {
+                _showDeleteConfirmationDialog(context, i);
+              },
+            ),
           ),
         );
-      },
+      }
+    }
+
+    return ListView(
+      children: listTiles,
     );
+  }
+
+  void setSearchText() {
+    filterQuery = searchController.text.toLowerCase();
+  }
+
+  void clearSearchFilter() {
+    filterQuery = '';
   }
 
   @override
   Widget build(BuildContext context) {
+    TextField textField = TextField(
+      controller: searchController,
+      onChanged: (value) {setState(() {});},
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(),
+        hintText: "Search game in library",
+        suffixIcon: IconButton(
+          onPressed: () {
+            setState(() {
+              clearSearchFilter();
+              searchController.clear();
+            });
+          },
+          icon: const Icon(Icons.clear),
+        ),
+      ),
+    );
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('MediaMaster'),
@@ -102,13 +140,20 @@ class MyAppState extends State<MyApp> {
         children: [
           Expanded(
             flex: 3,
-            child: Container(
-              color: Colors.grey[200],
-              child: ValueListenableBuilder(
-                valueListenable: gameBox.listenable(),
-                builder: mediaListBuilder,
-              ),
-            ),
+            child: Column(
+              children: [
+                SizedBox(
+                  child: textField,
+                ),
+                Expanded(
+                  //color: Colors.grey[200],
+                  child: ValueListenableBuilder(
+                    valueListenable: gameBox.listenable(),
+                    builder: mediaListBuilder,
+                  ),
+                ),
+              ],
+            )
           ),
           Expanded(
             flex: 10,
