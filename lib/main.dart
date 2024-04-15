@@ -75,11 +75,10 @@ class MyAppState extends State<MyApp> {
   ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _)
   {
     List<ListTile> listTiles = List.from([]);
-    setSearchText();
 
     for(int i = 0;i < box.length;++i) {
       final game = box.getAt(i)!;
-      if(game.name.toLowerCase().contains(filterQuery)) {
+      if(filterQuery == "" || game.name.toLowerCase().contains(filterQuery)) {
         listTiles.add(
           ListTile(
             title: Text(game.name),
@@ -114,21 +113,27 @@ class MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    setSearchText();
+
+    IconButton? butonReset = IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  clearSearchFilter();
+                                  searchController.clear();
+                                });
+                              },
+                              icon: const Icon(Icons.clear),
+                            );
+    if(filterQuery == "")
+      butonReset = null;
+
     TextField textField = TextField(
       controller: searchController,
       onChanged: (value) {setState(() {});},
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
         hintText: "Search game in library",
-        suffixIcon: IconButton(
-          onPressed: () {
-            setState(() {
-              clearSearchFilter();
-              searchController.clear();
-            });
-          },
-          icon: const Icon(Icons.clear),
-        ),
+        suffixIcon: butonReset,
       ),
     );
     
