@@ -75,9 +75,11 @@ class MyAppState extends State<MyApp> {
   ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _)
   {
     List<ListTile> listTiles = List.from([]);
+    List<Game> games = List.from(box.values);
+    games.sort((g0, g1) => g0.name.compareTo(g1.name));
 
-    for(int i = 0;i < box.length;++i) {
-      final game = box.getAt(i)!;
+    for(int i = 0;i < games.length;++i) {
+      final game = games[i];
       if(filterQuery == "" || game.name.toLowerCase().contains(filterQuery)) {
         listTiles.add(
           ListTile(
