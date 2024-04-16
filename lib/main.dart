@@ -126,8 +126,9 @@ class MyAppState extends State<MyApp> {
                               },
                               icon: const Icon(Icons.clear),
                             );
-    if(filterQuery == "")
+    if(filterQuery == "") {
       butonReset = null;
+    }
 
     TextField textField = TextField(
       controller: searchController,
@@ -284,6 +285,13 @@ class MyAppState extends State<MyApp> {
   }
 
   Future<void> _addGame(String gameName) async {
+    for(int i = 0;i < gameBox.length;++i) {
+      Game game = gameBox.getAt(i)!;
+      if(game.name == gameName) {
+        return;
+      }
+    }
+
     Game newGame = Game(
       id: DateTime.now().millisecondsSinceEpoch,
       name: gameName,
