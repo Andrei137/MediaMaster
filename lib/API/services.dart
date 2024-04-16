@@ -100,7 +100,9 @@ Future<void> igdbGames(String gameName) async {
         console.clearScreen();
         print("Choose a game:");
         for (int i = 0; i < games.length; ++i) {
-          print("${i + 1}. ${games[i]['name']}");
+            games[i]['name'] = utf8.decode(games[i]['name'].runes.toList());
+            games[i]['summary'] = utf8.decode(games[i]['summary'].runes.toList());
+            print("${i + 1}. ${games[i]['name']}");
         }
         stdout.write("\nEnter the number of the game: ");
         final choice = stdin.readLineSync();
@@ -235,7 +237,11 @@ Future<void> howLongToBeat(String gameName) async {
           final text = timeElements[i].text;
           final label = text.split(RegExp(r'\d'))[0].trim();
           final time = text.substring(label.length).trim();
-          print("$label: $time");
+
+          if (!label.contains('-') && !label.isEmpty && !time.isEmpty)
+          {
+            print("$label: $time");
+          }
         }
       }
     }
@@ -259,8 +265,15 @@ Future<void> howLongToBeat(String gameName) async {
 
       for (int i = 0; i < allHLTBLink.length; ++i) {
         String currLink = allHLTBLink[i].attributes['href'].toString();
-        // Remove google or completions links, so we only get the game links
-        if (currLink.contains('www.google') || currLink.contains('completions')) {
+        // Remove google links, so we only get the game links
+        if (currLink.contains('www.google')) {
+          continue;
+        }
+
+        // Remove bad howlongtobeat links
+        final badLinks = ['reviews', 'lists', 'completions'];
+        if (badLinks.any((element) => currLink.contains(element)))
+        {
           continue;
         }
 
