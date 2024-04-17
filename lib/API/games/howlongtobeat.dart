@@ -113,7 +113,7 @@ class HowLongToBeat {
       _console.clearScreen();
       print("Choose a game:");
       for (int i = 0; i < gameNames.length; ++i) {
-        print("$[{i + 1}] ${gameNames[i]}");
+        print("[${i + 1}] ${gameNames[i]}");
       }
       stdout.write("\nEnter the number of the game: ");
       final choice = stdin.readLineSync();

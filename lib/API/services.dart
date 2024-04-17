@@ -7,6 +7,7 @@ import 'package:html/dom.dart';
 import 'package:dart_console/dart_console.dart';
 import 'constants.dart';
 import 'games/howlongtobeat.dart';
+import 'games/pcgamingwiki.dart';
 
 final console = Console();
 
@@ -33,7 +34,8 @@ Future<void> main() async {
         await igdbGames(query);
         break;
       case '2':
-        await pcGamingWiki(query);
+        final systemRequirements = await PcGamingWiki.search(query);
+        print(systemRequirements);
         break;
       case '3':
         final gameTimes = await HowLongToBeat.search(query);
@@ -143,92 +145,6 @@ Future<void> igdbGames(String gameName) async {
   } 
   catch (e) {
     print("Error: $e");
-  }
-}
-
-Future<void> pcGamingWiki(String gameName) async {
-  Future<void> printSystemRequirements(String gameName) async
-  {
-    final pageUrl = "https://www.pcgamingwiki.com/wiki/${gameName.replaceAll(' ', '_')}";
-
-    // Go to the game's page
-    http.Response gameResponse = await http.get(Uri.parse(pageUrl));
-    if (gameResponse.statusCode == 200) {
-      // If the page exists, parse it
-      final document = parse(gameResponse.body);
-
-      // Find the system requirements table
-      final sysreqsTable = document.querySelector('.pcgwikitable#table-sysreqs-windows');
-
-      print("Title: $gameName");
-      print("Page URL: $pageUrl");
-
-      if (sysreqsTable != null) {
-        print("System Requirements:");
-
-        // Get the table rows
-        List<Element> rows = sysreqsTable.querySelectorAll('.template-infotable-body, .table-sysreqs-body-row');
-        for (var row in rows) {
-          final category = row.querySelector('.table-sysreqs-body-parameter')?.text.trim() ?? '';
-          final minimumReq = row.querySelector('.table-sysreqs-body-minimum')?.text.trim() ?? '';
-          final recommendedReq = row.querySelector('.table-sysreqs-body-recommended')?.text.trim() ?? '';
-
-          // If there are requirements, print them
-          if (minimumReq.isNotEmpty || recommendedReq.isNotEmpty)
-          {
-            print("$category:");
-            if (minimumReq.isNotEmpty) {
-              print("    Minimum: $minimumReq");
-            }
-            if (recommendedReq.isNotEmpty) {
-              print("    Recommended: $recommendedReq");
-            }
-          }
-        }
-      } 
-      else {
-        print("No system requirements found.");
-      }
-    }
-  }
-
-  try {
-    // Prepare the search request
-    final searchUrl = 'https://www.pcgamingwiki.com/w/api.php?action=query&format=json&list=search&srsearch=$gameName';
-
-    http.Response searchResponse = await http.get(Uri.parse(searchUrl));
-    if (searchResponse.statusCode == 200) {
-      // If the call to the API was successful, get the games
-      Map<String, dynamic> games = jsonDecode(searchResponse.body);
-
-      // If we find any games, ask the user to choose one
-      if (games.containsKey('query') && games['query'].containsKey('search')) {
-        print("Choose a game:");
-        for (int i = 0; i < games['query']['search'].length; ++i) {
-          print("${i + 1}. ${games['query']['search'][i]['title']}");
-        }
-        stdout.write("\nEnter the number of the game: ");
-        final choice = stdin.readLineSync();
-
-        // Validate the user input
-        if (choice != null) {
-          final index = int.parse(choice);
-          if (index > 0 && index <= games['query']['search'].length) {
-            console.clearScreen();
-            await printSystemRequirements(games['query']['search'][index - 1]['title']);
-          } 
-          else {
-            print('Invalid choice.');
-          }
-        }
-      } 
-      else {
-        print('Game not found.');
-      }
-    }
-  } 
-  catch (e) {
-    print('Error: $e');
   }
 }
 
