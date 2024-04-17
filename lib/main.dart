@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'utils.dart';
+import 'package:pair/pair.dart';
 
 void main() async {
   await Hive.initFlutter();
@@ -75,24 +76,30 @@ class MyAppState extends State<MyApp> {
   ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _)
   {
     List<ListTile> listTiles = List.from([]);
-    List<Game> games = List.from(box.values);
-    games.sort((g0, g1) => g0.name.compareTo(g1.name));
+    List<Pair<Game, int> > gamesIndices = List.from([]);
 
-    for(int i = 0;i < games.length;++i) {
-      final game = games[i];
+    for(int i = 0;i < box.length;++i) {
+      gamesIndices.add(Pair(box.getAt(i)!, i));
+    }
+
+    gamesIndices.sort((p0, p1) => p0.key.name.compareTo(p1.key.name));
+
+    for(int i = 0;i < gamesIndices.length;++i) {
+      final game = gamesIndices[i].key;
+      final idx = gamesIndices[i].value;
       if(filterQuery == "" || game.name.toLowerCase().contains(filterQuery)) {
         listTiles.add(
           ListTile(
             title: Text(game.name),
             onTap: () {
               setState(() {
-                selectedGameIndex = i;
+                selectedGameIndex = idx;
               });
             },
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () {
-                _showDeleteConfirmationDialog(context, i);
+                _showDeleteConfirmationDialog(context, idx);
               },
             ),
           ),
@@ -126,8 +133,9 @@ class MyAppState extends State<MyApp> {
                               },
                               icon: const Icon(Icons.clear),
                             );
-    if(filterQuery == "")
+    if(filterQuery == "") {
       butonReset = null;
+    }
 
     TextField textField = TextField(
       controller: searchController,
