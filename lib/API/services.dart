@@ -1,4 +1,3 @@
-import 'constants.dart';
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
@@ -6,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
 import 'package:dart_console/dart_console.dart';
+import 'constants.dart';
+import 'games/howlongtobeat.dart';
 
 final console = Console();
 
@@ -16,14 +17,14 @@ Future<void> main() async {
   while (running)
   {
     print("Choose an option:");
-    print("1. IGDB (Games)");
-    print("2. PcGamingWiki (Game System Requirements)");
-    print("3. HowLongToBeat (Game Times)");
-    print("4. Goodreads (Books)");
-    print("5. TMDB (TV Series)");
-    print("6. TMDB (Movies)");
-    print("9. Change query (Current: $query)");
-    print("0. Exit");
+    print("[1] IGDB (Games)");
+    print("[2] PcGamingWiki (Game System Requirements)");
+    print("[3] HowLongToBeat (Game Times)");
+    print("[4] Goodreads (Books)");
+    print("[5] TMDB (TV Series)");
+    print("[6] TMDB (Movies)");
+    print("[9] Change query (Current: $query)");
+    print("[0] Exit");
     stdout.write("\nEnter your choice: ");
     var choice = stdin.readLineSync() ?? '';
     console.clearScreen();
@@ -35,7 +36,8 @@ Future<void> main() async {
         await pcGamingWiki(query);
         break;
       case '3':
-        await howLongToBeat(query);
+        final gameTimes = await HowLongToBeat.search(query);
+        print(gameTimes);
         break;
       case '4':
         await goodreads(query);
@@ -90,18 +92,20 @@ Future<void> igdbGames(String gameName) async {
       };
       // version_parent = null -> no editions
       // parent_game = null -> no DLCs
-      final gameBody = "fields *; search \"$gameName\"; where version_parent = null & parent_game = null;";
+      final gameBody = "fields id,aggregated_rating,artworks,collection,collections,cover,first_release_date,franchise,genres,involved_companies,name,platforms,rating,summary,tags,total_rating,url,websites; search \"$gameName\"; where version_parent = null & parent_game = null;";
 
       final gameResponse = await http.post(gameUrl, headers: gameHeaders, body: gameBody);
       if (gameResponse.statusCode == 200) {
         // If the call to the API was successful, let the user choose a game
         var games = jsonDecode(gameResponse.body);
-
         console.clearScreen();
         print("Choose a game:");
         for (int i = 0; i < games.length; ++i) {
             games[i]['name'] = utf8.decode(games[i]['name'].runes.toList());
-            games[i]['summary'] = utf8.decode(games[i]['summary'].runes.toList());
+            if (games[i]['summary'] != null)
+            {
+              games[i]['summary'] = utf8.decode(games[i]['summary'].runes.toList());
+            }
             print("${i + 1}. ${games[i]['name']}");
         }
         stdout.write("\nEnter the number of the game: ");
@@ -112,9 +116,17 @@ Future<void> igdbGames(String gameName) async {
         if (choice != null) {
           final index = int.parse(choice);
           if (index > 0 && index <= games.length) {
-            print("Name: ${games[index - 1]['name']}");
-            print("Summary: ${games[index - 1]['summary']}");
-            print("Rating: ${games[index - 1]['rating']}");
+            final collectionUrl = Uri.parse("https://api.igdb.com/v4/collections");
+            final collectionBody = "fields name; here id = ${games[index - 1]['collection']};";
+
+            final collectionResponse = await http.post(collectionUrl, headers: gameHeaders, body: collectionBody);
+            if (collectionResponse.statusCode == 200) 
+            {
+              final collection = jsonDecode(collectionResponse.body);
+              games[index - 1]['collection'] = collection[0]['name'];
+            }
+
+            print(games[index - 1]);
           } 
           else {
             print('Invalid choice.');
@@ -212,118 +224,6 @@ Future<void> pcGamingWiki(String gameName) async {
       } 
       else {
         print('Game not found.');
-      }
-    }
-  } 
-  catch (e) {
-    print('Error: $e');
-  }
-}
-
-Future<void> howLongToBeat(String gameName) async {
-  Future<void> printGameTimes(Document document) async {
-    final querySelectors = [
-      '.GameStats_short__tSJ6I',
-      '.GameStats_long__h3afN',
-      '.GameStats_full__jz7k7'
-    ];
-
-    for (var selector in querySelectors) {
-      final timeElements = document.querySelectorAll(selector);
-      if (!timeElements.isEmpty) {
-        for (var i = 0; i < timeElements.length; ++i) {
-          // Split the text after the first digit, and include it in the second one
-          // Single-Player68½ Hours - 274 Hours -> Singleplayer and 68½ - 274 Hours
-          final text = timeElements[i].text;
-          final label = text.split(RegExp(r'\d'))[0].trim();
-          final time = text.substring(label.length).trim();
-
-          if (!label.contains('-') && !label.isEmpty && !time.isEmpty)
-          {
-            print("$label: $time");
-          }
-        }
-      }
-    }
-  }
-
-  try {
-    // Prepare the search request
-    final encodedGameName = Uri.encodeQueryComponent("how long to beat $gameName");
-    final searchUrl = Uri.parse('https://www.google.com/search?q=$encodedGameName');
-
-    final searchResponse = await http.get(searchUrl);
-    if (searchResponse.statusCode == 200) {
-      // If the search was successful, parse the results
-      final document = parse(searchResponse.body);
-
-      // Select all elements with href*="howlongtobeat.com/game/"
-      final allHLTBLink = document.querySelectorAll('a[href*="howlongtobeat.com/game/"]');
-
-      // Add link to a set to remove duplicates
-      final tempSet = <String>{};
-
-      for (int i = 0; i < allHLTBLink.length; ++i) {
-        String currLink = allHLTBLink[i].attributes['href'].toString();
-        // Remove google links, so we only get the game links
-        if (currLink.contains('www.google')) {
-          continue;
-        }
-
-        // Remove bad howlongtobeat links
-        final badLinks = ['reviews', 'lists', 'completions'];
-        if (badLinks.any((element) => currLink.contains(element)))
-        {
-          continue;
-        }
-
-        // /url?q=https://howlongtobeat.com/game/[id]&[other_stuff] -> https://howlongtobeat.com/game/[id]
-        currLink = currLink.split('/url?q=').last.split('&').first;
-        tempSet.add(currLink);
-      }
-
-      final gameLinks = tempSet.toList();
-      var gameNames = <String>[];
-
-      // Get every game's name
-      for (int i = 0; i < gameLinks.length; ++i) {
-        var gameResponse = await http.get(Uri.parse(gameLinks[i]));
-        if (gameResponse.statusCode == 200) {
-          final currGameDocument = parse(gameResponse.body);
-          final currGameName = currGameDocument.querySelector('.GameHeader_profile_header__q_PID')?.text;
-          gameNames.add(currGameName ?? '');
-        }
-      }
-
-      // Get the user's choice
-      console.clearScreen();
-      print("Choose a game:");
-      for (int i = 0; i < gameNames.length; ++i) {
-        print("${i + 1}. ${gameNames[i]}");
-      }
-      stdout.write("\nEnter the number of the game: ");
-      final choice = stdin.readLineSync();
-      console.clearScreen();
-
-      // Validate the user input
-      if (choice != null)
-      {
-        final index = int.parse(choice);
-        if (index > 0 && index <= gameNames.length)
-        {
-          final gameUrl = Uri.parse(gameLinks[index - 1]);
-          final gameResponse = await http.get(gameUrl);
-          if (gameResponse.statusCode == 200) {
-            print("Game: ${gameNames[index - 1]}");
-            await printGameTimes(parse(gameResponse.body));
-          }
-          else {
-            print("No data found.");
-          }
-        }
-        else {
-          print('Invalid choice.');
-        }
       }
     }
   } 
