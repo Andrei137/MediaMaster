@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -113,6 +114,16 @@ class MyAppState extends State<MyApp> {
     filterQuery = '';
   }
 
+  bool gameAlreadyInLibrary(String gameName) {
+    for(Game game in gameBox.values) {
+      if(game.name == gameName) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     setSearchText();
@@ -212,7 +223,7 @@ class MyAppState extends State<MyApp> {
             return AlertDialog(
               title: const Text('Search for a Game'),
               content: SizedBox(
-                height: noSearch ? 100 : 150, // Set height based on the presence of search results
+                height: noSearch ? 100 : 400, // Set height based on the presence of search results
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -242,13 +253,31 @@ class MyAppState extends State<MyApp> {
                               const SizedBox(height: 2),
                               ...searchResults.map((result) {
                                 String gameName = result['title'];
-                                return ListTile(
-                                  title: Text(gameName),
-                                  onTap: () {
-                                    _addGame(gameName);
-                                    Navigator.of(context).pop();
-                                  },
-                                );
+
+                                if(gameAlreadyInLibrary(gameName)) {
+                                    return ListTile(
+                                    title: Text(gameName),
+                                    subtitle: const Text(
+                                      "Game is already in library",
+                                      style: TextStyle(
+                                        color: Color.fromARGB(255, 255, 0, 0),
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      _addGame(gameName);
+                                      Navigator.of(context).pop();
+                                    },
+                                  );
+                                }
+                                else {
+                                  return ListTile(
+                                    title: Text(gameName),
+                                    onTap: () {
+                                      _addGame(gameName);
+                                      Navigator.of(context).pop();
+                                    },
+                                  );
+                                }
                               }),
                             ],
                           ),
