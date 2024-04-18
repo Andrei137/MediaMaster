@@ -8,14 +8,13 @@ import 'package:dart_console/dart_console.dart';
 import 'general/Constants.dart';
 import 'general/ServiceHandler.dart';
 import 'general/ServiceBuilder.dart';
-import 'games/PcGamingWiki.dart';
 
 final console = Console();
 
 int getUserInput(List<Map<String, dynamic>> options) {
   try {
     console.clearScreen();
-    print("Choose a game:");
+    print("Choose an option:");
     for (int i = 0; i < options.length; ++i) {
       print("[${i + 1}] ${options[i]['name']}");
     }
@@ -64,8 +63,7 @@ Future<void> main() async {
         // await igdbGames(query);
         break;
       case '2':
-        // final systemRequirements = await PcGamingWiki.search(query);
-        // print(systemRequirements);
+        ServiceBuilder.setPcGamingWiki();
         break;
       case '3':
         ServiceBuilder.setHowLongToBeat();
@@ -90,7 +88,7 @@ Future<void> main() async {
         print("Invalid choice.");
         break;
     }
-    if (running && choice == '3')
+    if (running && choice != '9')
     {
       final options = await ServiceHandler.getOptions(query);
       final index = getUserInput(options);
