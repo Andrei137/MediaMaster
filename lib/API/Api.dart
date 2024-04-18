@@ -181,86 +181,55 @@ Future<void> igdbGames(String gameName) async {
   }
 }
 
-Future<void> goodreads(String bookName) async {
-  final bookHeaders = {
-    'User-Agent': userAgentsGoodreads
-  };
+// Future<void> goodreads(String bookName) async {
+//   final bookUrl = "https://www.goodreads.com/search?q=$bookName";
 
-  Future<void> printBookDetails(var book) async {
-    final bookResponse = await http.get(Uri.parse(book['bookLink']), headers: bookHeaders);
-    if (bookResponse.statusCode == 200) {
-      // If the call to the API was successful, get the book details
-      final document = parse(bookResponse.body);
-      final pagesFormat = document.querySelector('p[data-testid="pagesFormat"]');
-      final numPages = pagesFormat?.text?.trim().split(' ')[0] ?? "Unknown";
-      final publicationInfo = document.querySelector('p[data-testid="publicationInfo"]')?.text?.trim().split('First published ')?.last ?? "Unknown";
-      final description = document.querySelector('span.Formatted')?.text?.trim() ?? "Unknown";
-      final scriptTag = document.querySelector('script[type="application/ld+json"]');
-      final jsonData = json.decode(scriptTag?.text ?? "{}");
-      final bookFormat = jsonData['bookFormat'] ?? 'Unknown';
-      final language = jsonData['inLanguage'] ?? 'Unknown';
+//   final bookResponse = await http.get(Uri.parse(bookUrl), headers: bookHeaders);
+//   if (bookResponse.statusCode == 200) {
+//     // If the search was successful, parse the results
+//     final document = parse(bookResponse.body);
 
-      print("Title: ${book['title']}");
-      print("Author: ${book['author']}");
-      print("Average Rating: ${book['avgRating']}");
-      print("Number of Pages: $numPages");
-      print("Publication Info: $publicationInfo");
-      print("Description: $description");
-      print("Book Format: $bookFormat");
-      print("Language: $language");
-    } else {
-      print("No data found.");
-    }
-  }
+//     final books = <Map<String, dynamic>>[];
+//     for (var book in document.querySelectorAll('tr[itemtype="http://schema.org/Book"]')) {
+//       final title = book.querySelector('a.bookTitle')?.text?.trim() ?? "Unknown";
+//       final author = book.querySelector('a.authorName')?.text?.trim() ?? "Unknown";
+//       final ratingText = book.querySelector('span.minirating')?.text?.trim() ?? "Unknown";
+//       final avgRating = ratingText.split('avg rating —')[0].trim();
+//       final bookLink = "https://www.goodreads.com${book.querySelector('a.bookTitle')?.attributes['href'] ?? ""}";
 
-  final bookUrl = "https://www.goodreads.com/search?q=$bookName";
+//       books.add({
+//         'title': title,
+//         'author': author,
+//         'avgRating': avgRating,
+//         'bookLink': bookLink,
+//       });
+//     }
 
-  final bookResponse = await http.get(Uri.parse(bookUrl), headers: bookHeaders);
-  if (bookResponse.statusCode == 200) {
-    // If the search was successful, parse the results
-    final document = parse(bookResponse.body);
+//     // Let the user choose a book
+//     console.clearScreen();
+//     print("Choose a book:");
+//     for (var i = 0; i < books.length; i++) {
+//       print("${i + 1}. ${books[i]['title']} by ${books[i]['author']}");
+//     }
+//     stdout.write("\nEnter the number of the book: "); 
+//     final choice = stdin.readLineSync();
+//     console.clearScreen();
 
-    final books = <Map<String, dynamic>>[];
-    for (var book in document.querySelectorAll('tr[itemtype="http://schema.org/Book"]')) {
-      final title = book.querySelector('a.bookTitle')?.text?.trim() ?? "Unknown";
-      final author = book.querySelector('a.authorName')?.text?.trim() ?? "Unknown";
-      final ratingText = book.querySelector('span.minirating')?.text?.trim() ?? "Unknown";
-      final avgRating = ratingText.split('avg rating —')[0].trim();
-      final bookLink = "https://www.goodreads.com${book.querySelector('a.bookTitle')?.attributes['href'] ?? ""}";
-
-      books.add({
-        'title': title,
-        'author': author,
-        'avgRating': avgRating,
-        'bookLink': bookLink,
-      });
-    }
-
-    // Let the user choose a book
-    console.clearScreen();
-    print("Choose a book:");
-    for (var i = 0; i < books.length; i++) {
-      print("${i + 1}. ${books[i]['title']} by ${books[i]['author']}");
-    }
-    stdout.write("\nEnter the number of the book: "); 
-    final choice = stdin.readLineSync();
-    console.clearScreen();
-
-    // Validate the user input
-    if (choice != null) {
-      final index = int.parse(choice);
-      if (index > 0 && index <= books.length) {
-        await printBookDetails(books[index - 1]);
-      } 
-      else {
-        print('Invalid choice.');
-      }
-    }
-  } 
-  else {
-    print("No data found.");
-  }
-}
+//     // Validate the user input
+//     if (choice != null) {
+//       final index = int.parse(choice);
+//       if (index > 0 && index <= books.length) {
+//         await printBookDetails(books[index - 1]);
+//       } 
+//       else {
+//         print('Invalid choice.');
+//       }
+//     }
+//   } 
+//   else {
+//     print("No data found.");
+//   }
+// }
 
 Future<void> tmdbSeries(String seriesName) async {
   final seriesHeaders = {
