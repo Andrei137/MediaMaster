@@ -5,11 +5,41 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
 import 'package:dart_console/dart_console.dart';
-import 'constants.dart';
-import 'games/howlongtobeat.dart';
-import 'games/pcgamingwiki.dart';
+import 'general/Constants.dart';
+import 'general/ServiceHandler.dart';
+import 'general/ServiceBuilder.dart';
+import 'games/PcGamingWiki.dart';
 
 final console = Console();
+
+int getUserInput(List<Map<String, dynamic>> options) {
+  try {
+    console.clearScreen();
+    print("Choose a game:");
+    for (int i = 0; i < options.length; ++i) {
+      print("[${i + 1}] ${options[i]['name']}");
+    }
+    stdout.write("\nEnter the number of the game: ");
+    final choice = stdin.readLineSync();
+    console.clearScreen();
+    
+    if (choice != null) {
+      final index = int.parse(choice);
+      if (index > 0 && index <= options.length) {
+        return index;
+      }
+      else {
+        return 0;
+      }
+    }
+    else {
+      return 0;
+    }
+  }
+  catch (e) {
+    return 0;
+  }
+}
 
 Future<void> main() async {
   console.clearScreen();
@@ -31,24 +61,23 @@ Future<void> main() async {
     console.clearScreen();
     switch (choice) {
       case '1':
-        await igdbGames(query);
+        // await igdbGames(query);
         break;
       case '2':
-        final systemRequirements = await PcGamingWiki.search(query);
-        print(systemRequirements);
+        // final systemRequirements = await PcGamingWiki.search(query);
+        // print(systemRequirements);
         break;
       case '3':
-        final gameTimes = await HowLongToBeat.search(query);
-        print(gameTimes);
+        ServiceBuilder.setHowLongToBeat();
         break;
       case '4':
-        await goodreads(query);
+        // await goodreads(query);
         break;
       case '5':
-        await tmdbSeries(query);
+        // await tmdbSeries(query);
         break;
       case '6':
-        await tmdbMovies(query);
+        // await tmdbMovies(query);
         break;
       case '9':
         stdout.write("New query: ");
@@ -61,9 +90,15 @@ Future<void> main() async {
         print("Invalid choice.");
         break;
     }
-    if (running && choice != '9')
+    if (running && choice == '3')
     {
-      stdout.write("\n\nPress Enter to continue...");
+      final options = await ServiceHandler.getOptions(query);
+      final index = getUserInput(options);
+      if (index != 0) {
+        final answer = await ServiceHandler.search(options[index - 1]);
+        print(answer);
+      } 
+      stdout.write("\nPress Enter to continue...");
       stdin.readLineSync();
     }
     console.clearScreen();

@@ -48,4 +48,4 @@ app.*.map.json
 *ios
 *android
 
-lib/API/constants.dart
+lib/API/general/Constants.dart

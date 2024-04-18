@@ -4,8 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
 import 'package:html/dom.dart';
 import 'package:dart_console/dart_console.dart';
+import '../general/Service.dart';
 
-class HowLongToBeat {
+class HowLongToBeat implements Service {
   // Members
   final _console = Console();
   final _querySelectors = [
@@ -93,61 +94,60 @@ class HowLongToBeat {
     }
   }
 
-  Future<Map<String, dynamic>?> _searchGame(String gameName) async {
-    try
-    {
+  Future<List<Map<String, dynamic>>> _getGames(String gameName) async {
+    try {
       final gameLinks = await _getLinks(gameName);
 
-      // Get every game's name
-      var gameNames = <String>[];
+      var options = <Map<String, dynamic>>[];
       for (int i = 0; i < gameLinks.length; ++i) {
         var gameResponse = await http.get(Uri.parse(gameLinks[i]));
         if (gameResponse.statusCode == 200) {
           final currGameDocument = parse(gameResponse.body);
           final currGameName = currGameDocument.querySelector('.GameHeader_profile_header__q_PID')?.text;
-          gameNames.add(currGameName ?? '');
-        }
-      }
-
-      // Get the user's choice
-      _console.clearScreen();
-      print("Choose a game:");
-      for (int i = 0; i < gameNames.length; ++i) {
-        print("[${i + 1}] ${gameNames[i]}");
-      }
-      stdout.write("\nEnter the number of the game: ");
-      final choice = stdin.readLineSync();
-      _console.clearScreen();
-
-      // Validate the user input
-      if (choice != null) {
-        final index = int.parse(choice);
-        if (index > 0 && index <= gameNames.length) {
-          final gameUrl = Uri.parse(gameLinks[index - 1]);
-          final gameResponse = await http.get(gameUrl);
-          if (gameResponse.statusCode == 200) {
-            final document = parse(gameResponse.body);
-            return await _gameTimes(document);
-          } 
-          else {
-            // If the request failed, return null
-            return null;
+          if (currGameName != null) {
+            options.add({
+              'name': currGameName,
+              'link': gameLinks[i]
+            });
           }
-        } 
-        else {
-          // If the index is out of bounds, return null
-          return null;
         }
+      }
+      return options;
+    }
+    catch (e) {
+      // If an error occurs, return an empty list
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> _searchGame(Map<String, dynamic> game) async {
+    try
+    {
+      final gameUrl = Uri.parse(game['link']);
+      final gameResponse = await http.get(gameUrl);
+      if (gameResponse.statusCode == 200) {
+        final document = parse(gameResponse.body);
+        return await _gameTimes(document);
+      } 
+      else {
+        // If the request failed, return an empty map
+        return {};
       }
     }
     catch (e) {
-      // If an error occurs, return null
-      return null;
+      // If an error occurs, return an empty map
+      return {};
     }
   }
 
   // Public methods
-  static Future<Map<String, dynamic>?> search(String gameName) async {
-    return instance._searchGame(gameName);
+  @override
+  Future<List<Map<String, dynamic>>> getOptions(String gameName) async {
+    return instance._getGames(gameName);
+  }
+
+  @override
+  Future<Map<String, dynamic>> search(Map<String, dynamic> game) async {
+    return instance._searchGame(game);
   }
 }
