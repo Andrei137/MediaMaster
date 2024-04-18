@@ -69,7 +69,7 @@ Future<void> main() async {
         ServiceBuilder.setHowLongToBeat();
         break;
       case '4':
-        // await goodreads(query);
+        ServiceBuilder.setGoodReads();
         break;
       case '5':
         // await tmdbSeries(query);
@@ -180,56 +180,6 @@ Future<void> igdbGames(String gameName) async {
     print("Error: $e");
   }
 }
-
-// Future<void> goodreads(String bookName) async {
-//   final bookUrl = "https://www.goodreads.com/search?q=$bookName";
-
-//   final bookResponse = await http.get(Uri.parse(bookUrl), headers: bookHeaders);
-//   if (bookResponse.statusCode == 200) {
-//     // If the search was successful, parse the results
-//     final document = parse(bookResponse.body);
-
-//     final books = <Map<String, dynamic>>[];
-//     for (var book in document.querySelectorAll('tr[itemtype="http://schema.org/Book"]')) {
-//       final title = book.querySelector('a.bookTitle')?.text?.trim() ?? "Unknown";
-//       final author = book.querySelector('a.authorName')?.text?.trim() ?? "Unknown";
-//       final ratingText = book.querySelector('span.minirating')?.text?.trim() ?? "Unknown";
-//       final avgRating = ratingText.split('avg rating —')[0].trim();
-//       final bookLink = "https://www.goodreads.com${book.querySelector('a.bookTitle')?.attributes['href'] ?? ""}";
-
-//       books.add({
-//         'title': title,
-//         'author': author,
-//         'avgRating': avgRating,
-//         'bookLink': bookLink,
-//       });
-//     }
-
-//     // Let the user choose a book
-//     console.clearScreen();
-//     print("Choose a book:");
-//     for (var i = 0; i < books.length; i++) {
-//       print("${i + 1}. ${books[i]['title']} by ${books[i]['author']}");
-//     }
-//     stdout.write("\nEnter the number of the book: "); 
-//     final choice = stdin.readLineSync();
-//     console.clearScreen();
-
-//     // Validate the user input
-//     if (choice != null) {
-//       final index = int.parse(choice);
-//       if (index > 0 && index <= books.length) {
-//         await printBookDetails(books[index - 1]);
-//       } 
-//       else {
-//         print('Invalid choice.');
-//       }
-//     }
-//   } 
-//   else {
-//     print("No data found.");
-//   }
-// }
 
 Future<void> tmdbSeries(String seriesName) async {
   final seriesHeaders = {

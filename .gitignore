@@ -49,4 +49,3 @@ app.*.map.json
 *android
 
 lib/API/general/Constants.dart
-lib/API/books
