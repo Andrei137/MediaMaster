@@ -75,7 +75,7 @@ Future<void> main() async {
         // await tmdbSeries(query);
         break;
       case '6':
-        // await tmdbMovies(query);
+        ServiceBuilder.setTmdbMovies();
         break;
       case '9':
         stdout.write("New query: ");
@@ -253,57 +253,6 @@ Future<void> tmdbSeries(String seriesName) async {
           print('Invalid choice.');
         }
       }
-    }
-  }
-  catch (e) {
-    print("Error: $e");
-  }
-}
-
-Future<void> tmdbMovies(String movieName) async {
-  try
-  {
-    // Prepare the movie request
-    final movieUrl = Uri.parse("https://api.themoviedb.org/3/search/movie");
-    final movieParams = {
-      "query": Uri.encodeQueryComponent(movieName)
-    };
-    final movieHeaders = {
-      "accept": "application/json",
-      "Authorization": "Bearer $accessTokenTMDB"
-    };
-
-    final movieResponse = await http.get(movieUrl.replace(queryParameters: movieParams), headers: movieHeaders);
-    if (movieResponse.statusCode == 200) {
-      // If the call to the API was successful, let the user choose a movie
-      final movies = json.decode(movieResponse.body);
-        
-      console.clearScreen();
-      print("Choose a movie:");
-      for (int i = 0; i < movies['results'].length; ++i) {
-        print("${i + 1}. ${movies['results'][i]['title']}");
-      }
-      stdout.write("\nEnter the number of the movie: ");
-      final choice = stdin.readLineSync();
-      console.clearScreen();
-
-      // Validate the user input
-      if (choice != null) {
-        final index = int.parse(choice);
-        if (index > 0 && index <= movies['results'].length) {
-          print("Title: ${movies['results'][index - 1]['title']}");
-          print("Overview: ${movies['results'][index - 1]['overview']}");
-          print("Release Date: ${movies['results'][index - 1]['release_date']}");
-          print("Rating: ${movies['results'][index - 1]['vote_average']}");
-          print("Vote Count: ${movies['results'][index - 1]['vote_count']}");
-        } 
-        else {
-          print('Invalid choice.');
-        }
-      }
-    } 
-    else {
-      print("Error: ${movieResponse.statusCode}");
     }
   }
   catch (e) {
