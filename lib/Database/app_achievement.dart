@@ -14,7 +14,8 @@ class AppAchievement extends HiveObject {
   @HiveField(2)
   int xp;
 
-  AppAchievement({required this.name, required this.description, this.xp = 100});
+  AppAchievement(
+      {required this.name, required this.description, this.xp = 100});
 
   @override
   String toString() {

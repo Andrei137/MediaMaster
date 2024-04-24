@@ -16,7 +16,10 @@ class UserAchievement extends HiveObject {
   @HiveField(2)
   DateTime unlockDate;
 
-  UserAchievement({required this.user, required this.achievement, required this.unlockDate});
+  UserAchievement(
+      {required this.user,
+      required this.achievement,
+      required this.unlockDate});
 
   @override
   String toString() {

@@ -17,7 +17,8 @@ class MediaUserGenre extends HiveObject {
   @HiveField(2)
   Genre genre;
 
-  MediaUserGenre({required this.media, required this.user, required this.genre});
+  MediaUserGenre(
+      {required this.media, required this.user, required this.genre});
 
   @override
   String toString() {

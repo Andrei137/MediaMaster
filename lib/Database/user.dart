@@ -22,7 +22,11 @@ class User extends HiveObject {
   @HiveField(4)
   DateTime creationDate = DateTime.now();
 
-  User({required this.username, required this.email, required this.hashSalt, required this.password});
+  User(
+      {required this.username,
+      required this.email,
+      required this.hashSalt,
+      required this.password});
 
   @override
   String toString() {
