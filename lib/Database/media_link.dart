@@ -1,41 +1,41 @@
 import 'package:hive/hive.dart';
 import 'media.dart';
-import 'retailer.dart';
+import 'link.dart';
 
 // Don't change the numbers below (HiveType and HiveField).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 // HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 19)
-class MediaRetailer extends HiveObject {
+@HiveType(typeId: 27)
+class MediaLink extends HiveObject {
   @HiveField(0)
   Media media;
 
   @HiveField(1)
-  Retailer retailer;
+  Link link;
 
-  MediaRetailer({required this.media, required this.retailer});
+  MediaLink({required this.media, required this.link});
 
   @override
   String toString() {
-    return "(Media: ${media.key}, retailer: ${retailer.key})";
+    return "(Media: ${media.key}, link: ${link.key})";
   }
 }
 
-class MediaRetailerAdapter extends TypeAdapter<MediaRetailer> {
+class MediaLinkAdapter extends TypeAdapter<MediaLink> {
   @override
-  final int typeId = 19;
+  final int typeId = 27;
 
   @override
-  MediaRetailer read(BinaryReader reader) {
-    return MediaRetailer(
+  MediaLink read(BinaryReader reader) {
+    return MediaLink(
       media: reader.read(),
-      retailer: reader.read(),
+      link: reader.read(),
     );
   }
 
   @override
-  void write(BinaryWriter writer, MediaRetailer obj) {
+  void write(BinaryWriter writer, MediaLink obj) {
     writer.write(obj.media);
-    writer.write(obj.retailer);
+    writer.write(obj.link);
   }
 }

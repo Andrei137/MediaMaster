@@ -1,41 +1,40 @@
 import 'package:hive/hive.dart';
 import 'media.dart';
-import 'retailer.dart';
 
 // Don't change the numbers below (HiveType and HiveField).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 // HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 19)
-class MediaRetailer extends HiveObject {
+@HiveType(typeId: 11)
+class TvSeries extends HiveObject {
   @HiveField(0)
   Media media;
 
   @HiveField(1)
-  Retailer retailer;
+  String originalLanguage;
 
-  MediaRetailer({required this.media, required this.retailer});
+  TvSeries({required this.media, required this.originalLanguage});
 
   @override
   String toString() {
-    return "(Media: ${media.key}, retailer: ${retailer.key})";
+    return "(Media: ${media.key}, originalLanguage: $originalLanguage)";
   }
 }
 
-class MediaRetailerAdapter extends TypeAdapter<MediaRetailer> {
+class TvSeriesAdapter extends TypeAdapter<TvSeries> {
   @override
-  final int typeId = 19;
+  final int typeId = 11;
 
   @override
-  MediaRetailer read(BinaryReader reader) {
-    return MediaRetailer(
+  TvSeries read(BinaryReader reader) {
+    return TvSeries(
       media: reader.read(),
-      retailer: reader.read(),
+      originalLanguage: reader.readString(),
     );
   }
 
   @override
-  void write(BinaryWriter writer, MediaRetailer obj) {
+  void write(BinaryWriter writer, TvSeries obj) {
     writer.write(obj.media);
-    writer.write(obj.retailer);
+    writer.writeString(obj.originalLanguage);
   }
 }

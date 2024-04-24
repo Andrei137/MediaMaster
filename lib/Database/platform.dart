@@ -3,12 +3,12 @@ import 'package:hive/hive.dart';
 // Don't change the numbers below (HiveType and HiveField).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 // HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 20)
-class Publisher extends HiveObject {
+@HiveType(typeId: 24)
+class Platform extends HiveObject {
   @HiveField(0)
   String name;
 
-  Publisher({required this.name});
+  Platform({required this.name});
 
   @override
   String toString() {
@@ -16,19 +16,19 @@ class Publisher extends HiveObject {
   }
 }
 
-class PublisherAdapter extends TypeAdapter<Publisher> {
+class PlatformAdapter extends TypeAdapter<Platform> {
   @override
-  final int typeId = 20;
+  final int typeId = 24;
 
   @override
-  Publisher read(BinaryReader reader) {
-    return Publisher(
+  Platform read(BinaryReader reader) {
+    return Platform(
       name: reader.readString(),
     );
   }
 
   @override
-  void write(BinaryWriter writer, Publisher obj) {
+  void write(BinaryWriter writer, Platform obj) {
     writer.writeString(obj.name);
   }
 }
