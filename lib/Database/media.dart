@@ -17,7 +17,7 @@ class Media extends HiveObject {
   @HiveField(3)
   int communityScore;
 
-  @HiveFiled(4)
+  @HiveField(4)
   String mediaType;
 
   Media({required this.description, required this.releaseDate, required this.criticScore, required this.communityScore, required this.mediaType});
