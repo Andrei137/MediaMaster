@@ -21,35 +21,6 @@ void main() async {
   ));
 }
 
-// class Game {
-//   int id;
-//   String name;
-//   String backgroundImage;
-
-//   Game({required this.id, required this.name, required this.backgroundImage});
-// }
-
-// class GameAdapter extends TypeAdapter<Game> {
-//   @override
-//   final int typeId = 223;
-
-//   @override
-//   Game read(BinaryReader reader) {
-//     return Game(
-//       id: reader.readInt(),
-//       name: reader.readString(),
-//       backgroundImage: reader.readString(),
-//     );
-//   }
-
-//   @override
-//   void write(BinaryWriter writer, Game obj) {
-//     writer.writeInt(obj.id);
-//     writer.writeString(obj.name);
-//     writer.writeString(obj.backgroundImage);
-//   }
-// }
-
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
   
