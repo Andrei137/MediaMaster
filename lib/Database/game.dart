@@ -13,59 +13,63 @@ class Game extends HiveObject {
   Game? parentGame;
 
   @HiveField(2)
-  String OS;
+  String OSMinimum;
 
   @HiveField(3)
-  String CPUMinimum;
+  String OSRecommended;
 
   @HiveField(4)
-  String CPURecommended;
+  String CPUMinimum;
 
   @HiveField(5)
-  String RAMMinimum;
+  String CPURecommended;
 
   @HiveField(6)
-  String RAMRecommended;
+  String RAMMinimum;
 
   @HiveField(7)
-  String HDDMinimum;
+  String RAMRecommended;
 
   @HiveField(8)
-  String HDDRecommended;
+  String HDDMinimum;
 
   @HiveField(9)
-  String GPUMinimum;
+  String HDDRecommended;
 
   @HiveField(10)
-  String GPURecommended;
+  String GPUMinimum;
 
   @HiveField(11)
-  int HLTBMainInSeconds;
+  String GPURecommended;
 
   @HiveField(12)
-  int HLTBMainSideInSeconds;
+  int HLTBMainInSeconds;
 
   @HiveField(13)
-  int HLTBCompletionistInSeconds;
+  int HLTBMainSideInSeconds;
 
   @HiveField(14)
-  int HLTBAllStylesInSeconds;
+  int HLTBCompletionistInSeconds;
 
   @HiveField(15)
-  int HLTBSoloInSeconds;
+  int HLTBAllStylesInSeconds;
 
   @HiveField(16)
-  int HLTBCoopInSeconds;
+  int HLTBSoloInSeconds;
 
   @HiveField(17)
-  int HLTBVersusInSeconds;
+  int HLTBCoopInSeconds;
 
   @HiveField(18)
+  int HLTBVersusInSeconds;
+
+  @HiveField(19)
   int HLTBSingleplayerInSeconds;
 
   Game(
       {required this.media,
-      required this.OS,
+      required this.OSMinimum,
+      required this.OSRecommended,
       required this.CPUMinimum,
       required this.CPURecommended,
       required this.RAMMinimum,
@@ -86,7 +90,7 @@ class Game extends HiveObject {
 
   @override
   String toString() {
-    return "(Media: ${media.key}, OS: $OS, HLTBMainInSeconds: $HLTBMainInSeconds)";
+    return "(Media: ${media.key}, OSRecommended: $OSRecommended, HLTBMainInSeconds: $HLTBMainInSeconds)";
   }
 }
 
@@ -98,7 +102,8 @@ class GameAdapter extends TypeAdapter<Game> {
   Game read(BinaryReader reader) {
     return Game(
       media: reader.read(),
-      OS: reader.readString(),
+      OSMinimum: reader.readString(),
+      OSRecommended: reader.readString(),
       CPUMinimum: reader.readString(),
       CPURecommended: reader.readString(),
       RAMMinimum: reader.readString(),
@@ -122,7 +127,8 @@ class GameAdapter extends TypeAdapter<Game> {
   @override
   void write(BinaryWriter writer, Game obj) {
     writer.write(obj.media);
-    writer.writeString(obj.OS);
+    writer.writeString(obj.OSMinimum);
+    writer.writeString(obj.OSRecommended);
     writer.writeString(obj.CPUMinimum);
     writer.writeString(obj.CPURecommended);
     writer.writeString(obj.RAMMinimum);
