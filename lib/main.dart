@@ -1,17 +1,24 @@
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'utils.dart';
 import 'package:pair/pair.dart';
 
+import 'Database/user.dart';
+import 'Database/app_achievement.dart';
+import 'Database/user_achievement.dart';
+
 void main() async {
   await Hive.initFlutter();
+  Hive.registerAdapter(UserAdapter());
   Hive.registerAdapter(GameAdapter());
+  Hive.registerAdapter(AppAchievementAdapter());
+  Hive.registerAdapter(UserAchievementAdapter());
+  await Hive.openBox<User>('users');
   await Hive.openBox<Game>('games');
+  await Hive.openBox<AppAchievement>('appAchievements');
+  await Hive.openBox<UserAchievement>('userAchievements');
 
   runApp(MaterialApp(
     title: 'MediaMaster',
@@ -32,7 +39,7 @@ class Game {
 
 class GameAdapter extends TypeAdapter<Game> {
   @override
-  final int typeId = 0;
+  final int typeId = 223;
 
   @override
   Game read(BinaryReader reader) {
