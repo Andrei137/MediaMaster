@@ -6,22 +6,26 @@ import 'package:hive/hive.dart';
 @HiveType(typeId: 3)
 class Media extends HiveObject {
   @HiveField(0)
-  String description;
+  String originalName;
 
   @HiveField(1)
-  DateTime releaseDate;
+  String description;
 
   @HiveField(2)
-  int criticScore;
+  DateTime releaseDate;
 
   @HiveField(3)
-  int communityScore;
+  int criticScore;
 
   @HiveField(4)
+  int communityScore;
+
+  @HiveField(5)
   String mediaType;
 
   Media(
-      {required this.description,
+      {required this.originalName,
+      required this.description,
       required this.releaseDate,
       required this.criticScore,
       required this.communityScore,
@@ -29,7 +33,7 @@ class Media extends HiveObject {
 
   @override
   String toString() {
-    return "(Description: $description, releaseDate: $releaseDate, criticScore: $criticScore, communityScore: $communityScore, mediaType: $mediaType)";
+    return "(Name: $originalName, description: $description, releaseDate: $releaseDate, criticScore: $criticScore, communityScore: $communityScore, mediaType: $mediaType)";
   }
 }
 
@@ -40,6 +44,7 @@ class MediaAdapter extends TypeAdapter<Media> {
   @override
   Media read(BinaryReader reader) {
     return Media(
+      originalName: reader.readString(),
       description: reader.readString(),
       releaseDate: reader.read(),
       criticScore: reader.readInt(),
@@ -50,6 +55,7 @@ class MediaAdapter extends TypeAdapter<Media> {
 
   @override
   void write(BinaryWriter writer, Media obj) {
+    writer.writeString(obj.originalName);
     writer.writeString(obj.description);
     writer.write(obj.releaseDate);
     writer.writeInt(obj.criticScore);

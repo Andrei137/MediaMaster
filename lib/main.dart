@@ -5,20 +5,12 @@ import 'package:http/http.dart' as http;
 import 'utils.dart';
 import 'package:pair/pair.dart';
 
-import 'Database/user.dart';
-import 'Database/app_achievement.dart';
-import 'Database/user_achievement.dart';
+import 'Database/media.dart';
+import 'Database/game.dart';
+import 'Database/database_adapters.dart';
 
 void main() async {
-  await Hive.initFlutter();
-  Hive.registerAdapter(UserAdapter());
-  Hive.registerAdapter(GameAdapter());
-  Hive.registerAdapter(AppAchievementAdapter());
-  Hive.registerAdapter(UserAchievementAdapter());
-  await Hive.openBox<User>('users');
-  await Hive.openBox<Game>('games');
-  await Hive.openBox<AppAchievement>('appAchievements');
-  await Hive.openBox<UserAchievement>('userAchievements');
+  await initHiveAndAdapters();
 
   runApp(MaterialApp(
     title: 'MediaMaster',
@@ -29,34 +21,34 @@ void main() async {
   ));
 }
 
-class Game {
-  int id;
-  String name;
-  String backgroundImage;
+// class Game {
+//   int id;
+//   String name;
+//   String backgroundImage;
 
-  Game({required this.id, required this.name, required this.backgroundImage});
-}
+//   Game({required this.id, required this.name, required this.backgroundImage});
+// }
 
-class GameAdapter extends TypeAdapter<Game> {
-  @override
-  final int typeId = 223;
+// class GameAdapter extends TypeAdapter<Game> {
+//   @override
+//   final int typeId = 223;
 
-  @override
-  Game read(BinaryReader reader) {
-    return Game(
-      id: reader.readInt(),
-      name: reader.readString(),
-      backgroundImage: reader.readString(),
-    );
-  }
+//   @override
+//   Game read(BinaryReader reader) {
+//     return Game(
+//       id: reader.readInt(),
+//       name: reader.readString(),
+//       backgroundImage: reader.readString(),
+//     );
+//   }
 
-  @override
-  void write(BinaryWriter writer, Game obj) {
-    writer.writeInt(obj.id);
-    writer.writeString(obj.name);
-    writer.writeString(obj.backgroundImage);
-  }
-}
+//   @override
+//   void write(BinaryWriter writer, Game obj) {
+//     writer.writeInt(obj.id);
+//     writer.writeString(obj.name);
+//     writer.writeString(obj.backgroundImage);
+//   }
+// }
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -78,7 +70,9 @@ class MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    print("Before open box");
     gameBox = Hive.box<Game>('games');
+    print("After open box");
   }
 
   ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _)
@@ -90,15 +84,15 @@ class MyAppState extends State<MyApp> {
       gamesIndices.add(Pair(box.getAt(i)!, i));
     }
 
-    gamesIndices.sort((p0, p1) => p0.key.name.compareTo(p1.key.name));
+    gamesIndices.sort((p0, p1) => p0.key.media.originalName.compareTo(p1.key.media.originalName));
 
     for(int i = 0;i < gamesIndices.length;++i) {
       final game = gamesIndices[i].key;
       final idx = gamesIndices[i].value;
-      if(filterQuery == "" || game.name.toLowerCase().contains(filterQuery)) {
+      if(filterQuery == "" || game.media.originalName.toLowerCase().contains(filterQuery)) {
         listTiles.add(
           ListTile(
-            title: Text(game.name),
+            title: Text(game.media.originalName),
             onTap: () {
               setState(() {
                 selectedGameIndex = idx;
@@ -128,14 +122,14 @@ class MyAppState extends State<MyApp> {
     filterQuery = '';
   }
 
-  bool gameAlreadyInLibrary(String gameName) {
+  Game? gameAlreadyInLibrary(String gameName) {
     for(Game game in gameBox.values) {
-      if(game.name == gameName) {
-        return true;
+      if(game.media.originalName == gameName) {
+        return game;
       }
     }
 
-    return false;
+    return null;
   }
 
   @override
@@ -191,10 +185,11 @@ class MyAppState extends State<MyApp> {
           Expanded(
             flex: 10,
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const /*We currently don't have "backgroundImage", thus the following is const. Remove const when we add the image*/ BoxDecoration(
                 image: DecorationImage(
                   image: NetworkImage(
-                    gameBox.isNotEmpty ? gameBox.getAt(selectedGameIndex)!.backgroundImage : placeholderImageUrl
+                    // gameBox.isNotEmpty ? gameBox.getAt(selectedGameIndex)!.backgroundImage : placeholderImageUrl
+                    placeholderImageUrl
                   ),
                   fit: BoxFit.cover,
                 ),
@@ -203,7 +198,7 @@ class MyAppState extends State<MyApp> {
                 color: Colors.black.withOpacity(0.5),
                 child: Center(
                   child: Text(
-                    gameBox.isNotEmpty ? gameBox.getAt(selectedGameIndex)!.name : '',
+                    gameBox.isNotEmpty ? gameBox.getAt(selectedGameIndex)!.media.originalName : '',
                     style: const TextStyle(color: Colors.white, fontSize: 24.0),
                   ),
                 ),
@@ -268,7 +263,7 @@ class MyAppState extends State<MyApp> {
                               ...searchResults.map((result) {
                                 String gameName = result['title'];
 
-                                if(gameAlreadyInLibrary(gameName)) {
+                                if(gameAlreadyInLibrary(gameName) != null /*Add here a check that the game is actually in the user's library, not the general one*/) {
                                     return ListTile(
                                     title: Text(gameName),
                                     subtitle: const Text(
@@ -328,19 +323,64 @@ class MyAppState extends State<MyApp> {
   }
 
   Future<void> _addGame(String gameName) async {
-    for(int i = 0;i < gameBox.length;++i) {
-      Game game = gameBox.getAt(i)!;
-      if(game.name == gameName) {
-        return;
-      }
+    Game? nullableGame = gameAlreadyInLibrary(gameName);
+
+    if(nullableGame == null) {
+      Game newGame = Game(
+        media: Media(
+          originalName: gameName,
+          description: "Add parameter/call to API for description here.",
+          releaseDate: DateTime.now() /*Add parameter/call to API for release date here.*/,
+          criticScore: -1 /*Add parameter/call to API for critic score here.*/,
+          communityScore: -1 /*Add parameter/call to API for comunity score here.*/,
+          mediaType: "Game",
+        ),
+        parentGame: null /*Add parameter/call to API to check if this is a DLC*/,
+        OSMinimum: "Minimum OS not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        OSRecommended: "Recommended OS not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        CPUMinimum: "Minimum CPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        CPURecommended: "Recommended CPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        RAMMinimum: "Minimum RAM not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        RAMRecommended: "Recommended RAM not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        HDDMinimum: "Minimum HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        HDDRecommended: "Recommended HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        GPUMinimum: "Minimum GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        GPURecommended: "Recommended GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        HLTBMainInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBMainSideInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBCompletionistInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBAllStylesInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBSoloInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBCoopInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBVersusInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBSingleplayerInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+      );
+      gameBox.add(newGame);
+      nullableGame = newGame;
     }
 
-    Game newGame = Game(
-      id: DateTime.now().millisecondsSinceEpoch,
-      name: gameName,
-      backgroundImage: placeholderImageUrl,
-    );
-    gameBox.add(newGame);
+    // TODO: Decoment the following lines when "Current User System" is implemented
+
+    // Game game = nullableGame;
+
+    // if(true/*Add a check that the user does not have the game in the personal library*/) {
+    //   Box<MediaUser> box = Hive.box('media-users');
+    //   box.add(
+    //     MediaUser(
+    //       media: game.media,
+    //       user: currentUser /*We currently don't have this, so decoment when we do*/,
+    //       name: game.media.originalName,
+    //       userScore: 0,
+    //       addedDate: DateTime.now(),
+    //       coverImage: "placeholder.png" /*Add a basic cover image*/,
+    //       status: "Plan To Play",
+    //       series: game.media.originalName /*Add parameter/call to game series API*/,
+    //       icon: "placeholder.png" /*Add a basic cover image*/,
+    //       backgroundImage: "placeholder.png" /*Add a basic cover image*/,
+    //       lastInteracted: DateTime.now(),
+    //     ),
+    //   );
+    // }
   }
 
   Future<void> _showDeleteConfirmationDialog(BuildContext context, int index) async {
