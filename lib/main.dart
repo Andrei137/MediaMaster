@@ -5,12 +5,16 @@ import 'package:http/http.dart' as http;
 import 'utils.dart';
 import 'package:pair/pair.dart';
 
-import 'Database/media.dart';
-import 'Database/game.dart';
-import 'Database/database_adapters.dart';
+import 'Models/media.dart';
+import 'Models/game.dart';
+import 'Models/database_adapters.dart';
+
+import 'Testing/test_db_relationships.dart';
 
 void main() async {
   await initHiveAndAdapters();
+
+  testAllRelationships();
 
   runApp(MaterialApp(
     title: 'MediaMaster',
@@ -41,9 +45,7 @@ class MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    print("Before open box");
     gameBox = Hive.box<Game>('games');
-    print("After open box");
   }
 
   ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _)
