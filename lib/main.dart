@@ -9,7 +9,9 @@ import 'package:pair/pair.dart';
 
 import 'Models/database_adapters.dart';
 import 'Models/game.dart';
+import 'Models/genre.dart';
 import 'Models/media.dart';
+import 'Models/tag.dart';
 import 'Models/user.dart';
 
 import 'Testing/test_db_relationships.dart';
@@ -104,6 +106,8 @@ class MyAppState extends State<MyApp> {
       },
     ),
   ];
+  bool filterAll = true;
+  Set<int> selectedGenres = {}, selectedTags = {};
 
   // Placeholder image URL
   static const String placeholderImageUrl =
@@ -587,8 +591,181 @@ class MyAppState extends State<MyApp> {
     );
   }
 
-  void _showFilterGamesDialog(BuildContext context) {
+  Future<void> _showFilterGamesDialog(BuildContext context) {
     // TODO: Implement this
+
+    // Helper function, should be called when a variable gets changed
+    void resetState() {
+      setState(() {});
+    };
+
+    var tags = Hive.box<Tag>('tags');
+    var genres = Hive.box<Genre>('genres');
+
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Filter games'),
+              content: SizedBox(
+                height: 400,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Filter type',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: filterAll,
+                            onChanged: (value) {
+                              setState(() {
+                                if(value == true) {
+                                  filterAll = true;
+                                  resetState();
+                                }
+                              });
+                            },
+                          ),
+                          const Text(
+                            'All',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: !filterAll,
+                            onChanged: (value) {
+                              setState(() {
+                                if(value == true) {
+                                  filterAll = false;
+                                  resetState();
+                                }
+                              });
+                            },
+                          ),
+                          const Text(
+                            'Any',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Text(
+                            'Genres',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => setState(() {
+                              selectedGenres.clear();
+                              resetState();
+                            }),
+                            icon: const Icon(
+                              Icons.clear,
+                            ),
+                          ),
+                        ],
+                      ),
+                      for(int i = 0;i < genres.length;++i)
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: selectedGenres.contains(i),
+                              onChanged: (value) {
+                                setState(() {
+                                  if(value == true) {
+                                    selectedGenres.add(i);
+                                  }
+                                  else {
+                                    selectedGenres.remove(i);
+                                  }
+                                  resetState();
+                                });
+                              },
+                            ),
+                            Text(
+                              genres.getAt(i)!.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      Row(
+                        children: [
+                          const Text(
+                            'Tags',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => setState(() {
+                              selectedTags.clear();
+                              resetState();
+                            }),
+                            icon: const Icon(
+                              Icons.clear,
+                            ),
+                          ),
+                        ],
+                      ),
+                      for(int i = 0;i < tags.length;++i)
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: selectedTags.contains(i),
+                              onChanged: (value) {
+                                setState(() {
+                                  if(value == true) {
+                                    selectedTags.add(i);
+                                  }
+                                  else {
+                                    selectedTags.remove(i);
+                                  }
+                                  resetState();
+                                });
+                              },
+                            ),
+                            Text(
+                              tags.getAt(i)!.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ], // -------------------------------------------------------------------
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      }
+    );
   }
 
   void _darkModeToggle(BuildContext context) {
