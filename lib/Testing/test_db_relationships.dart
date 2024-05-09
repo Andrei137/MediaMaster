@@ -30,7 +30,7 @@ import '/../Models/user_achievement.dart';
 import '/../Models/wishlist.dart';
 
 void testAllRelationships() {
-  var appAchievements = Hive.box('appAchievements');
+  var appAchievements = Hive.box<AppAchievement>('appAchievements');
   var books = Hive.box<Book>('books');
   var creators = Hive.box<Creator>('creators');
   var episodes = Hive.box<Episode>('episodes');
@@ -125,7 +125,7 @@ void testAllRelationships() {
     );
   };
 
-  {
+  void testAppAchievements() {
     appAchievements.add(
       AppAchievement(
         name: "Nume achievement",
@@ -139,7 +139,5 @@ void testAllRelationships() {
         description: "Domn student, nu merge asa",
       ),
     );
-
-    
   }
 }

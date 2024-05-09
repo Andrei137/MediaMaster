@@ -1,28 +1,39 @@
 import 'dart:convert';
+// import 'dart:html';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:mediamaster/Models/seed_data.dart';
 import 'utils.dart';
 import 'package:pair/pair.dart';
 
-import 'Models/media.dart';
-import 'Models/game.dart';
 import 'Models/database_adapters.dart';
+import 'Models/game.dart';
+import 'Models/media.dart';
+import 'Models/user.dart';
 
 import 'Testing/test_db_relationships.dart';
 
 void main() async {
   await initHiveAndAdapters();
+  bool testing = false;
 
-  testAllRelationships();
+  if(testing) {
+    testAllRelationships();
+  }
+  else {
+    addSeedData();
 
-  runApp(MaterialApp(
-    title: 'MediaMaster',
-    theme: ThemeData(
-      primarySwatch: Colors.blue,
-    ),
-    home: const MyApp(),
-  ));
+    runApp(
+      MaterialApp(
+        title: 'MediaMaster',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: const MyApp(),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -34,6 +45,7 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> {
   late Box<Game> gameBox;
+  late User currentUser; // TODO: Change when multiple users are available
   int selectedGameIndex = 0;
   String filterQuery = "";
   TextEditingController searchController = TextEditingController();
@@ -46,10 +58,21 @@ class MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     gameBox = Hive.box<Game>('games');
+    if(Hive.box<User>('users').isEmpty) {
+      currentUser = User(
+        username: 'Mai Neim',
+        email: 'mai_imeil@mail.com',
+        hashSalt: 'sare si piper',
+        password: '8217462837836478628', // This is not valid, the password is actually hashed, but until we get there we need a basic user
+      );
+      Hive.box<User>('users').add(currentUser);
+    }
+    else {
+      currentUser = Hive.box<User>('users').getAt(0)!;
+    }
   }
 
-  ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _)
-  {
+  ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _) {
     List<ListTile> listTiles = List.from([]);
     List<Pair<Game, int> > gamesIndices = List.from([]);
 
@@ -65,7 +88,9 @@ class MyAppState extends State<MyApp> {
       if(filterQuery == "" || game.media.originalName.toLowerCase().contains(filterQuery)) {
         listTiles.add(
           ListTile(
-            title: Text(game.media.originalName),
+            title: Text(
+              game.media.originalName
+            ),
             onTap: () {
               setState(() {
                 selectedGameIndex = idx;
@@ -74,7 +99,10 @@ class MyAppState extends State<MyApp> {
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () {
-                _showDeleteConfirmationDialog(context, idx);
+                _showDeleteConfirmationDialog(
+                  context,
+                  idx,
+                );
               },
             ),
           ),
@@ -109,17 +137,23 @@ class MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     setSearchText();
 
-    IconButton? butonReset = IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  clearSearchFilter();
-                                  searchController.clear();
-                                });
-                              },
-                              icon: const Icon(Icons.clear),
-                            );
+    IconButton? butonSearchReset;
     if(filterQuery == "") {
-      butonReset = null;
+      butonSearchReset = IconButton(
+        onPressed: () {/*TODO: The search box gets activated only if you hold down at least 2 frames, I do not know the function to activate it when pressing this button. I also do not know if this should be our priority right now*/},
+        icon: const Icon(Icons.search),
+      );
+    }
+    else {
+      butonSearchReset = IconButton(
+        onPressed: () {
+          setState(() {
+            clearSearchFilter();
+            searchController.clear();
+          });
+        },
+        icon: const Icon(Icons.clear),
+      );
     }
 
     TextField textField = TextField(
@@ -128,7 +162,7 @@ class MyAppState extends State<MyApp> {
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
         hintText: "Search game in library",
-        suffixIcon: butonReset,
+        suffixIcon: butonSearchReset,
       ),
     );
     
@@ -142,9 +176,57 @@ class MyAppState extends State<MyApp> {
             flex: 3,
             child: Column(
               children: [
-                SizedBox(
-                  child: textField,
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        _showSortGamesDialog(context);
+                      },
+                      icon: const Icon(Icons.sort),
+                      tooltip: 'Sort games',
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        _showFilterGamesDialog(context);
+                      },
+                      icon: const Icon(Icons.filter_alt),
+                      tooltip: 'Filter games',
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        _darkModeToggle(context);
+                      },
+                      icon: const Icon(Icons.dark_mode),
+                      tooltip: 'Toggle dark mode',
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        _showSettingsDialog(context);
+                      },
+                      icon: const Icon(Icons.settings),
+                      tooltip: 'Settings',
+                    ),
+                  ],
                 ),
+                  Row(
+                    children: [
+                      SizedBox(
+                        child: IconButton(
+                        onPressed: () {
+                          _showSearchGameDialog(context);
+                        },
+                        icon: const Icon(Icons.add_circle),
+                        tooltip: 'Add Game to Library',
+                      ),
+                      ),
+                      Expanded(
+                        child: textField,
+                      ),
+                      const SizedBox(
+                        width: 5,
+                      )
+                    ],
+                  ),
                 Expanded(
                   //color: Colors.grey[200],
                   child: ValueListenableBuilder(
@@ -180,14 +262,6 @@ class MyAppState extends State<MyApp> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showSearchGameDialog(context);
-        },
-        tooltip: 'Add Game to Library',
-        child: const Icon(Icons.download),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 
@@ -354,6 +428,22 @@ class MyAppState extends State<MyApp> {
     //     ),
     //   );
     // }
+  }
+
+  void _showSortGamesDialog(BuildContext context) {
+    // TODO: Implement this
+  }
+
+  void _showFilterGamesDialog(BuildContext context) {
+    // TODO: Implement this
+  }
+
+  void _darkModeToggle(BuildContext context) {
+    // TODO: Implement this
+  }
+
+  void _showSettingsDialog(BuildContext context) {
+    // TODO: Implement this
   }
 
   Future<void> _showDeleteConfirmationDialog(BuildContext context, int index) async {
