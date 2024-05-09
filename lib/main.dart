@@ -49,6 +49,61 @@ class MyAppState extends State<MyApp> {
   int selectedGameIndex = 0;
   String filterQuery = "";
   TextEditingController searchController = TextEditingController();
+  bool increasingSorting = true;
+  int selectedSortingMethod = 0;
+  var gameOrderComparators = [
+    Pair<String, dynamic>(
+      "By original name",
+      (Game a, Game b, int increasing) {
+        return increasing * a.media.originalName.compareTo(b.media.originalName);
+      },
+    ),
+    Pair<String, dynamic>(
+      "By critic score",
+      (Game a, Game b, int increasing) {
+        return increasing * a.media.criticScore.compareTo(b.media.criticScore);
+      },
+    ),
+    Pair<String, dynamic>(
+      "By comunity score",
+      (Game a, Game b, int increasing) {
+        return increasing * a.media.communityScore.compareTo(b.media.communityScore);
+      },
+    ),
+    Pair<String, dynamic>(
+      "By release date",
+      (Game a, Game b, int increasing) {
+        return increasing * a.media.releaseDate.compareTo(b.media.releaseDate);
+      },
+    ),
+    Pair<String, dynamic>(
+      "By time to beat",
+      (Game a, Game b, int increasing) {
+        int ta = a.getMinTimeToBeat();
+        int tb = b.getMinTimeToBeat();
+
+        if(tb == -1) {
+          return -1;
+        }
+        if(ta == -1) {
+          return 1;
+        }
+        return increasing * ta.compareTo(tb);
+      },
+    ),
+    Pair<String, dynamic>(
+      "By time to 100%",
+      (Game a, Game b, int increasing) {
+        if(b.HLTBCompletionistInSeconds == -1) {
+          return -1;
+        }
+        if(a.HLTBCompletionistInSeconds == -1) {
+          return 1;
+        }
+        return increasing * a.HLTBCompletionistInSeconds.compareTo(b.HLTBCompletionistInSeconds);
+      },
+    ),
+  ];
 
   // Placeholder image URL
   static const String placeholderImageUrl =
@@ -80,7 +135,15 @@ class MyAppState extends State<MyApp> {
       gamesIndices.add(Pair(box.getAt(i)!, i));
     }
 
-    gamesIndices.sort((p0, p1) => p0.key.media.originalName.compareTo(p1.key.media.originalName));
+    gamesIndices.sort(
+      (p0, p1) {
+        return gameOrderComparators[selectedSortingMethod].value(
+          p0.key,
+          p1.key,
+          increasingSorting ? 1 : -1,
+        );
+      }
+    );
 
     for(int i = 0;i < gamesIndices.length;++i) {
       final game = gamesIndices[i].key;
@@ -115,11 +178,11 @@ class MyAppState extends State<MyApp> {
     );
   }
 
-  void setSearchText() {
+  void _setSearchText() {
     filterQuery = searchController.text.toLowerCase();
   }
 
-  void clearSearchFilter() {
+  void _clearSearchFilter() {
     filterQuery = '';
   }
 
@@ -135,7 +198,7 @@ class MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    setSearchText();
+    _setSearchText();
 
     IconButton? butonSearchReset;
     if(filterQuery == "") {
@@ -148,7 +211,7 @@ class MyAppState extends State<MyApp> {
       butonSearchReset = IconButton(
         onPressed: () {
           setState(() {
-            clearSearchFilter();
+            _clearSearchFilter();
             searchController.clear();
           });
         },
@@ -430,8 +493,98 @@ class MyAppState extends State<MyApp> {
     // }
   }
 
-  void _showSortGamesDialog(BuildContext context) {
-    // TODO: Implement this
+  Future<void> _showSortGamesDialog(BuildContext context) {
+    // Helper function, should be called when a variable gets changed
+    void resetState() {
+      setState(() {});
+    };
+
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Sort games'),
+              content: SizedBox(
+                height: 300,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: increasingSorting,
+                          onChanged: (value) {
+                            setState(() {
+                              if(value == true) {
+                                increasingSorting = true;
+                                resetState();
+                              }
+                            });
+                          },
+                        ),
+                        const Text(
+                          'Increasing',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: !increasingSorting,
+                          onChanged: (value) {
+                            setState(() {
+                              if(value == true) {
+                                increasingSorting = false;
+                                resetState();
+                              }
+                            });
+                          },
+                        ),
+                        const Text(
+                          'Decreasing',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    for(int i = 0;i < gameOrderComparators.length;++i)
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: i == selectedSortingMethod,
+                            onChanged: (value) {
+                              setState(() {
+                                if(value == true) {
+                                  selectedSortingMethod = i;
+                                  resetState();
+                                }
+                              });
+                            },
+                          ),
+                          Text(
+                            gameOrderComparators[i].key,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ], // -------------------------------------------------------------------
+                ),
+              ),
+            );
+          },
+        );
+      }
+    );
   }
 
   void _showFilterGamesDialog(BuildContext context) {

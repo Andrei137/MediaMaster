@@ -78,19 +78,32 @@ class Game extends HiveObject {
       required this.HDDRecommended,
       required this.GPUMinimum,
       required this.GPURecommended,
-      required this.HLTBMainInSeconds,
-      required this.HLTBMainSideInSeconds,
-      required this.HLTBCompletionistInSeconds,
-      required this.HLTBAllStylesInSeconds,
-      required this.HLTBSoloInSeconds,
-      required this.HLTBCoopInSeconds,
-      required this.HLTBVersusInSeconds,
-      required this.HLTBSingleplayerInSeconds,
+      this.HLTBMainInSeconds = -1,
+      this.HLTBMainSideInSeconds = -1,
+      this.HLTBCompletionistInSeconds = -1,
+      this.HLTBAllStylesInSeconds = -1,
+      this.HLTBSoloInSeconds = -1,
+      this.HLTBCoopInSeconds = -1,
+      this.HLTBVersusInSeconds = -1,
+      this.HLTBSingleplayerInSeconds = -1,
       this.parentGame});
 
   @override
   String toString() {
     return "(Media: ${media.key}, OSRecommended: $OSRecommended, HLTBMainInSeconds: $HLTBMainInSeconds)";
+  }
+
+  int getMinTimeToBeat() {
+    List<int> times = List.from([HLTBAllStylesInSeconds, HLTBCompletionistInSeconds, HLTBCoopInSeconds, HLTBMainInSeconds, HLTBMainSideInSeconds, HLTBSingleplayerInSeconds, HLTBSoloInSeconds, HLTBVersusInSeconds]);
+    int minTime = -1;
+
+    for(int time in times) {
+      if(minTime == -1 || minTime > time) {
+        minTime = time;
+      }
+    }
+
+    return minTime;
   }
 }
 
