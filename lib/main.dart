@@ -512,76 +512,92 @@ class MyAppState extends State<MyApp> {
               title: const Text('Sort games'),
               content: SizedBox(
                 height: 300,
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: increasingSorting,
-                          onChanged: (value) {
-                            setState(() {
-                              if(value == true) {
-                                increasingSorting = true;
-                                resetState();
-                              }
-                            });
-                          },
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Sort direction',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const Text(
-                          'Increasing',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: !increasingSorting,
-                          onChanged: (value) {
-                            setState(() {
-                              if(value == true) {
-                                increasingSorting = false;
-                                resetState();
-                              }
-                            });
-                          },
-                        ),
-                        const Text(
-                          'Decreasing',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    for(int i = 0;i < gameOrderComparators.length;++i)
+                      ),
                       Row(
                         children: [
                           Checkbox(
-                            value: i == selectedSortingMethod,
+                            value: increasingSorting,
                             onChanged: (value) {
                               setState(() {
                                 if(value == true) {
-                                  selectedSortingMethod = i;
+                                  increasingSorting = true;
                                   resetState();
                                 }
                               });
                             },
                           ),
-                          Text(
-                            gameOrderComparators[i].key,
-                            style: const TextStyle(
+                          const Text(
+                            'Increasing',
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
-                  ], // -------------------------------------------------------------------
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: !increasingSorting,
+                            onChanged: (value) {
+                              setState(() {
+                                if(value == true) {
+                                  increasingSorting = false;
+                                  resetState();
+                                }
+                              });
+                            },
+                          ),
+                          const Text(
+                            'Decreasing',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Text(
+                        'Sort parameter',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      for(int i = 0;i < gameOrderComparators.length;++i)
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: i == selectedSortingMethod,
+                              onChanged: (value) {
+                                setState(() {
+                                  if(value == true) {
+                                    selectedSortingMethod = i;
+                                    resetState();
+                                  }
+                                });
+                              },
+                            ),
+                            Text(
+                              gameOrderComparators[i].key,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ], // -------------------------------------------------------------------
+                  ),
                 ),
               ),
             );
@@ -592,8 +608,6 @@ class MyAppState extends State<MyApp> {
   }
 
   Future<void> _showFilterGamesDialog(BuildContext context) {
-    // TODO: Implement this
-
     // Helper function, should be called when a variable gets changed
     void resetState() {
       setState(() {});
