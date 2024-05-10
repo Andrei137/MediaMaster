@@ -84,7 +84,7 @@ class IGDB implements Service {
       if (response.statusCode == 200) {
         var artworks = jsonDecode(response.body);
         for (int i = 0; i < artworks.length; ++i) {
-          _artwork.add(artworks[i]['url'].replaceFirst("thumb", "1080p"));
+          _artwork.add(artworks[i]['url'].replaceFirst("thumb", "original"));
         }
       } 
       else {
@@ -108,7 +108,7 @@ class IGDB implements Service {
       if (response.statusCode == 200) {
         var cover = jsonDecode(response.body);
         _cover = cover[0]['url'];
-        _cover = _cover.replaceFirst("thumb", "cover_big");
+        _cover = _cover.replaceFirst("thumb", "original");
       } 
       else {
         print("Failed to get cover.");
