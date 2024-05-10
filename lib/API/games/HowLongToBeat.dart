@@ -135,7 +135,7 @@ class HowLongToBeat implements Service {
   }
 
   @override
-  Future<Map<String, dynamic>> search(Map<String, dynamic> game) async {
+  Future<Map<String, dynamic>> getInfo(Map<String, dynamic> game) async {
     return instance._searchGame(game['link']);
   }
 }

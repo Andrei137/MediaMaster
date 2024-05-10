@@ -6,6 +6,9 @@ import 'package:html/dom.dart';
 import '../general/Service.dart';
 
 class PcGamingWiki implements Service {
+  // Members
+  final _queries = ['windows', 'os_x', 'linux'];
+
   // Private constructor
   PcGamingWiki._();
 
@@ -58,34 +61,40 @@ class PcGamingWiki implements Service {
 
       if (response.statusCode == 200) {
         final document = parse(response.body);
-        final sysreqsTable = document.querySelector('.pcgwikitable#table-sysreqs-windows');
-
         Map<String, dynamic> gameInfo = {
           'link': url,
         };
 
-        if (sysreqsTable != null) {
-          List<Element> rows = sysreqsTable.querySelectorAll('.template-infotable-body, .table-sysreqs-body-row');
+        for (var query in _queries) {
+          final sysreqsTable = document.querySelector('.pcgwikitable#table-sysreqs-$query');
 
-          for (var row in rows) {
-            final fullCategory = row.querySelector('.table-sysreqs-body-parameter')?.text.trim() ?? '';
-            final category = fullCategory.contains('(') ? fullCategory.split('(')[1].split(')')[0] : fullCategory;
+          Map<String, dynamic> sysreqs = {};
+          if (sysreqsTable != null) {
+            List<Element> rows = sysreqsTable.querySelectorAll('.template-infotable-body, .table-sysreqs-body-row');
 
-            final minimumReq = row.querySelector('.table-sysreqs-body-minimum')?.text.trim() ?? '';
-            final recommendedReq = row.querySelector('.table-sysreqs-body-recommended')?.text.trim() ?? '';
+            for (var row in rows) {
+              final fullCategory = row.querySelector('.table-sysreqs-body-parameter')?.text.trim() ?? '';
+              final category = fullCategory.contains('(') ? fullCategory.split('(')[1].split(')')[0] : fullCategory;
 
-            if (minimumReq.isNotEmpty || recommendedReq.isNotEmpty)
-            {
-              gameInfo[category] = {
-                'minimum': (minimumReq != '') ? minimumReq : null,
-                'recommended': (recommendedReq != '') ? recommendedReq : null
-              };
+              final minimumReq = row.querySelector('.table-sysreqs-body-minimum')?.text.trim() ?? '';
+              final recommendedReq = row.querySelector('.table-sysreqs-body-recommended')?.text.trim() ?? '';
+
+              if (minimumReq.isNotEmpty || recommendedReq.isNotEmpty)
+              {
+                sysreqs[category] = {
+                  'minimum': (minimumReq != '') ? minimumReq : null,
+                  'recommended': (recommendedReq != '') ? recommendedReq : null
+                };
+              }
             }
+            gameInfo[query] = sysreqs;
           }
+        }
+        if (gameInfo.isNotEmpty) {
           return gameInfo;
         }
         else {
-          return {'error': 'No requirements table'};
+          return {'error': 'No game data found'};
         }
       }
       else {
@@ -104,7 +113,7 @@ class PcGamingWiki implements Service {
   }
 
   @override
-  Future<Map<String, dynamic>> search(Map<String, dynamic> game) async {
+  Future<Map<String, dynamic>> getInfo(Map<String, dynamic> game) async {
     return instance._searchGame(game['name']);
   }
 }

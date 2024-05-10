@@ -11,7 +11,7 @@ class ServiceHandler {
     return _service?.getOptions(query) ?? Future.value([]);
   }
 
-  static Future<Map<String, dynamic>> search(Map<String, dynamic> item) {
-    return _service?.search(item) ?? Future.value({});
+  static Future<Map<String, dynamic>> getInfo(Map<String, dynamic> item) {
+    return _service?.getInfo(item) ?? Future.value({});
   }
 }
