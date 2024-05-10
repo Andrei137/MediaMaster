@@ -1,26 +1,40 @@
 import 'package:hive/hive.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 1)
 class AppAchievement extends HiveObject {
-  @HiveField(0)
+  // Hive fields
+  int id;
   String name;
-
-  @HiveField(1)
   String description;
-
-  @HiveField(2)
   int xp;
 
+  // Automatic id generator
+  static int nextId = 0;
+
   AppAchievement(
-      {required this.name, required this.description, this.xp = 100});
+      {this.id = -1,
+      required this.name,
+      required this.description,
+      this.xp = 100}) {
+        if(id == -1) {
+          id = nextId;
+        }
+        if(id >= nextId) {
+          nextId = id + 1;
+        }
+      }
 
   @override
-  String toString() {
-    return "(Achievement name: $name, description: $description, xp: $xp)";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return id == (other as AppAchievement).id;
   }
+  
+  @override
+  int get hashCode => id;
 }
 
 class AppAchievementAdapter extends TypeAdapter<AppAchievement> {
@@ -30,6 +44,7 @@ class AppAchievementAdapter extends TypeAdapter<AppAchievement> {
   @override
   AppAchievement read(BinaryReader reader) {
     return AppAchievement(
+      id: reader.readInt(),
       name: reader.readString(),
       description: reader.readString(),
       xp: reader.readInt(),
@@ -38,6 +53,7 @@ class AppAchievementAdapter extends TypeAdapter<AppAchievement> {
 
   @override
   void write(BinaryWriter writer, AppAchievement obj) {
+    writer.writeInt(obj.id);
     writer.writeString(obj.name);
     writer.writeString(obj.description);
     writer.writeInt(obj.xp);

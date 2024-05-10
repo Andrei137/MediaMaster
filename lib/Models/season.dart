@@ -1,26 +1,58 @@
 import 'package:hive/hive.dart';
 import 'tv_series.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 12)
 class Season extends HiveObject {
-  @HiveField(0)
-  TvSeries tvSeries;
-
-  @HiveField(1)
+  // Hive fields
+  int id;
+  int tvSeriesId;
   String name;
-
-  @HiveField(2)
   String coverImage;
 
+  // For ease of use
+  TvSeries? _tvSeries;
+
+  // Automatic id generator
+  static int nextId = 0;
+
   Season(
-      {required this.tvSeries, required this.name, required this.coverImage});
+      {this.id = -1,
+      required this.tvSeriesId,
+      required this.name,
+      required this.coverImage}) {
+        if(id == -1) {
+          id = nextId;
+        }
+        if(id >= nextId) {
+          nextId = id + 1;
+        }
+      }
 
   @override
-  String toString() {
-    return "(TvSeries: ${tvSeries.key}, name: $name)";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return id == (other as TvSeries).id;
+  }
+  
+  @override
+  int get hashCode => id;
+
+  TvSeries get tvSeries {
+    if(_tvSeries == null) {
+      Box<TvSeries> box = Hive.box<TvSeries>('tvSeries');
+      for(int i = 0;i < box.length;++i) {
+        if(tvSeriesId == box.getAt(i)!.id) {
+          _tvSeries = box.getAt(i);
+        }
+      }
+      if(_tvSeries == null) {
+        throw Exception("Season of id $id does not have an associated TvSeries object or tvSeriesId value is wrong ($tvSeriesId)");
+      }
+    }
+    return _tvSeries!;
   }
 }
 
@@ -31,7 +63,8 @@ class SeasonAdapter extends TypeAdapter<Season> {
   @override
   Season read(BinaryReader reader) {
     return Season(
-      tvSeries: reader.read(),
+      id: reader.readInt(),
+      tvSeriesId: reader.readInt(),
       name: reader.readString(),
       coverImage: reader.readString(),
     );
@@ -39,7 +72,8 @@ class SeasonAdapter extends TypeAdapter<Season> {
 
   @override
   void write(BinaryWriter writer, Season obj) {
-    writer.write(obj.tvSeries);
+    writer.writeInt(obj.id);
+    writer.writeInt(obj.tvSeriesId);
     writer.writeString(obj.name);
     writer.writeString(obj.coverImage);
   }

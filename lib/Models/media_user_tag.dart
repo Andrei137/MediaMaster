@@ -3,25 +3,78 @@ import 'media.dart';
 import 'user.dart';
 import 'tag.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 15)
 class MediaUserTag extends HiveObject {
-  @HiveField(0)
-  Media media;
+  // Hive fields
+  int mediaId;
+  int userId;
+  int tagId;
 
-  @HiveField(1)
-  User user;
+  // For ease of use
+  Media? _media;
+  User? _user;
+  Tag? _tag;
 
-  @HiveField(2)
-  Tag tag;
-
-  MediaUserTag({required this.media, required this.user, required this.tag});
+  MediaUserTag(
+      {required this.mediaId,
+      required this.userId,
+      required this.tagId});
 
   @override
-  String toString() {
-    return "(Media: {$media}, user: {$user}, tag: {$tag})";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return userId == (other as MediaUserTag).userId && mediaId == other.mediaId && tagId == other.tagId;
+  }
+  
+  @override
+  int get hashCode => Object.hash(mediaId, userId, tagId);
+
+  Media get media {
+    if(_media == null) {
+      Box<Media> box = Hive.box<Media>('media');
+      for(int i = 0;i < box.length;++i) {
+        if(mediaId == box.getAt(i)!.id) {
+          _media = box.getAt(i);
+        }
+      }
+      if(_media == null) {
+        throw Exception("MediaUserTag of mediaId $mediaId, userId $userId and tagId $tagId does not have an associated Media object or mediaId value is wrong");
+      }
+    }
+    return _media!;
+  }
+
+  User get user {
+    if(_user == null) {
+      Box<User> box = Hive.box<User>('users');
+      for(int i = 0;i < box.length;++i) {
+        if(userId == box.getAt(i)!.id) {
+          _user = box.getAt(i);
+        }
+      }
+      if(_user == null) {
+        throw Exception("MediaUserTag of mediaId $mediaId, userId $userId and tagId $tagId does not have an associated User object or userId value is wrong");
+      }
+    }
+    return _user!;
+  }
+
+  Tag get tag {
+    if(_tag == null) {
+      Box<Tag> box = Hive.box<Tag>('tags');
+      for(int i = 0;i < box.length;++i) {
+        if(tagId == box.getAt(i)!.id) {
+          _tag = box.getAt(i);
+        }
+      }
+      if(_tag == null) {
+        throw Exception("MediaUserTag of mediaId $mediaId, userId $userId and tagId $tagId does not have an associated Tag object or tagId value is wrong");
+      }
+    }
+    return _tag!;
   }
 }
 
@@ -32,16 +85,16 @@ class MediaUserTagAdapter extends TypeAdapter<MediaUserTag> {
   @override
   MediaUserTag read(BinaryReader reader) {
     return MediaUserTag(
-      media: reader.read(),
-      user: reader.read(),
-      tag: reader.read(),
+      mediaId: reader.readInt(),
+      userId: reader.readInt(),
+      tagId: reader.readInt(),
     );
   }
 
   @override
   void write(BinaryWriter writer, MediaUserTag obj) {
-    writer.write(obj.media);
-    writer.write(obj.user);
-    writer.write(obj.tag);
+    writer.writeInt(obj.mediaId);
+    writer.writeInt(obj.userId);
+    writer.writeInt(obj.tagId);
   }
 }

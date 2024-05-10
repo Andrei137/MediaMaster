@@ -3,32 +3,92 @@ import 'tv_series.dart';
 import 'season.dart';
 import 'media.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 13)
 class Episode extends HiveObject {
-  @HiveField(0)
-  TvSeries tvSeries;
-
-  @HiveField(1)
-  Season season;
-
-  @HiveField(2)
-  Media media;
-
-  @HiveField(3)
+  // Hive fields
+  int id;
+  int tvSeriesId;
+  int seasonId;
+  int mediaId;
   int durationInSeconds;
 
+  // For ease of use
+  TvSeries? _tvSeries;
+  Season? _season;
+  Media? _media;
+
+  // Automatic id generator
+  static int nextId = 0;
+
   Episode(
-      {required this.tvSeries,
-      required this.season,
-      required this.media,
-      required this.durationInSeconds});
+      {this.id = -1,
+      required this.tvSeriesId,
+      required this.seasonId,
+      this.mediaId = -1,
+      required this.durationInSeconds}) {
+        if(id == -1) {
+          id = nextId;
+        }
+        if(id >= nextId) {
+          nextId = id + 1;
+        }
+      }
 
   @override
-  String toString() {
-    return "(TvSeries: ${tvSeries.key}, season: ${season.key}, media: ${media.key}, durationInSeconds: $durationInSeconds)";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return id == (other as Episode).id;
+  }
+  
+  @override
+  int get hashCode => id;
+
+  TvSeries get tvSeries {
+    if(_tvSeries == null) {
+      Box<TvSeries> box = Hive.box<TvSeries>('tvSeries');
+      for(int i = 0;i < box.length;++i) {
+        if(tvSeriesId == box.getAt(i)!.id) {
+          _tvSeries = box.getAt(i);
+        }
+      }
+      if(_tvSeries == null) {
+        throw Exception("Episode of id $id does not have an associated Tv Series object or tvSeriesId value is wrong ($tvSeriesId)");
+      }
+    }
+    return _tvSeries!;
+  }
+
+  Season get season {
+    if(_season == null) {
+      Box<Season> box = Hive.box<Season>('seasons');
+      for(int i = 0;i < box.length;++i) {
+        if(tvSeriesId == box.getAt(i)!.id) {
+          _season = box.getAt(i);
+        }
+      }
+      if(_season == null) {
+        throw Exception("Episode of id $id does not have an associated Season object or seasonId value is wrong ($seasonId)");
+      }
+    }
+    return _season!;
+  }
+
+  Media get media {
+    if(_media == null) {
+      Box<Media> box = Hive.box<Media>('media');
+      for(int i = 0;i < box.length;++i) {
+        if(mediaId == box.getAt(i)!.id) {
+          _media = box.getAt(i);
+        }
+      }
+      if(_media == null) {
+        throw Exception("Episode of id $id does not have an associated Media object or mediaId value is wrong ($mediaId)");
+      }
+    }
+    return _media!;
   }
 }
 
@@ -39,18 +99,20 @@ class EpisodeAdapter extends TypeAdapter<Episode> {
   @override
   Episode read(BinaryReader reader) {
     return Episode(
-      tvSeries: reader.read(),
-      season: reader.read(),
-      media: reader.read(),
+      id: reader.readInt(),
+      tvSeriesId: reader.readInt(),
+      seasonId: reader.readInt(),
+      mediaId: reader.readInt(),
       durationInSeconds: reader.readInt(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Episode obj) {
-    writer.write(obj.tvSeries);
-    writer.write(obj.season);
-    writer.write(obj.media);
+    writer.write(obj.id);
+    writer.write(obj.tvSeriesId);
+    writer.write(obj.seasonId);
+    writer.write(obj.mediaId);
     writer.writeInt(obj.durationInSeconds);
   }
 }

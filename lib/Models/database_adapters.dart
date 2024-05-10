@@ -30,6 +30,7 @@ import 'wishlist.dart';
 
 Future<void> initHiveAndAdapters() async {
   await Hive.initFlutter();
+  
   Hive.registerAdapter(AppAchievementAdapter());
   Hive.registerAdapter(BookAdapter());
   Hive.registerAdapter(CreatorAdapter());

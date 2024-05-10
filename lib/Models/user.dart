@@ -1,37 +1,45 @@
 import 'package:hive/hive.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 0)
 class User extends HiveObject {
-  @HiveField(0)
+  // Hive fields
+  int id;
   String username;
-
   // There is no way to make this unique from hive. This must be checked when we create the new User
-  @HiveField(1)
   String email;
-
   // This is hashed
-  @HiveField(2)
   String password;
-
-  @HiveField(3)
   String hashSalt;
-
-  @HiveField(4)
   DateTime creationDate = DateTime.now();
 
+  // Automatic id generator
+  static int nextId = 0;
+
   User(
-      {required this.username,
+      {this.id = -1,
+      required this.username,
       required this.email,
       required this.hashSalt,
-      required this.password});
+      required this.password}) {
+        if(id == -1) {
+          id = nextId;
+        }
+        if(id >= nextId) {
+          nextId = id + 1;
+        }
+      }
 
   @override
-  String toString() {
-    return "(Username: $username, email: $email, creation date: ${creationDate.toString()})";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return id == (other as User).id;
   }
+  
+  @override
+  int get hashCode => id;
 }
 
 class UserAdapter extends TypeAdapter<User> {
@@ -41,6 +49,7 @@ class UserAdapter extends TypeAdapter<User> {
   @override
   User read(BinaryReader reader) {
     return User(
+      id: reader.readInt(),
       username: reader.readString(),
       email: reader.readString(),
       password: reader.readString(),
@@ -50,6 +59,7 @@ class UserAdapter extends TypeAdapter<User> {
 
   @override
   void write(BinaryWriter writer, User obj) {
+    writer.writeInt(obj.id);
     writer.writeString(obj.username);
     writer.writeString(obj.email);
     writer.writeString(obj.password);

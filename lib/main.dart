@@ -1,18 +1,19 @@
 import 'dart:convert';
-// import 'dart:html';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:mediamaster/Models/seed_data.dart';
-import 'utils.dart';
+import 'Utils.dart';
 import 'package:pair/pair.dart';
 
+import 'Models/seed_data.dart';
 import 'Models/database_adapters.dart';
 import 'Models/game.dart';
 import 'Models/genre.dart';
 import 'Models/media.dart';
+import 'Models/media_user.dart';
 import 'Models/tag.dart';
-import 'Models/user.dart';
+
+import 'UserSystem.dart';
 
 import 'Testing/test_db_relationships.dart';
 
@@ -45,9 +46,7 @@ class MyApp extends StatefulWidget {
   MyAppState createState() => MyAppState();
 }
 
-class MyAppState extends State<MyApp> {
-  late Box<Game> gameBox;
-  late User currentUser; // TODO: Change when multiple users are available
+class MyAppState extends State<MyApp> {  
   int selectedGameIndex = 0;
   String filterQuery = "";
   TextEditingController searchController = TextEditingController();
@@ -116,27 +115,16 @@ class MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    gameBox = Hive.box<Game>('games');
-    if(Hive.box<User>('users').isEmpty) {
-      currentUser = User(
-        username: 'Mai Neim',
-        email: 'mai_imeil@mail.com',
-        hashSalt: 'sare si piper',
-        password: '8217462837836478628', // This is not valid, the password is actually hashed, but until we get there we need a basic user
-      );
-      Hive.box<User>('users').add(currentUser);
-    }
-    else {
-      currentUser = Hive.box<User>('users').getAt(0)!;
-    }
+    UserSystem().loadUserContent();
   }
 
-  ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _) {
+  ListView mediaListBuilder(BuildContext context, Box<MediaUser> _, Widget? __) {
     List<ListTile> listTiles = List.from([]);
+    List<Game> userGames = UserSystem().getUserGames();
     List<Pair<Game, int> > gamesIndices = List.from([]);
 
-    for(int i = 0;i < box.length;++i) {
-      gamesIndices.add(Pair(box.getAt(i)!, i));
+    for(int i = 0;i < userGames.length;++i) {
+      gamesIndices.add(Pair(userGames[i], i));
     }
 
     gamesIndices.sort(
@@ -190,14 +178,25 @@ class MyAppState extends State<MyApp> {
     filterQuery = '';
   }
 
-  Game? gameAlreadyInLibrary(String gameName) {
-    for(Game game in gameBox.values) {
-      if(game.media.originalName == gameName) {
-        return game;
+  Game? gameAlreadyInDB(String gameName) {
+    Box<Game> games = Hive.box<Game>('games');
+    for(int i = 0;i < games.length;++i) {
+      if(games.getAt(i)!.media.originalName == gameName) {
+        return games.getAt(i);
       }
     }
 
     return null;
+  }
+
+  bool gameAlreadyInLibrary(String gameName) {
+    for(Game libgame in UserSystem().getUserGames()) {
+      if(gameName == libgame.media.originalName) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @override
@@ -232,7 +231,7 @@ class MyAppState extends State<MyApp> {
         suffixIcon: butonSearchReset,
       ),
     );
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('MediaMaster'),
@@ -297,7 +296,7 @@ class MyAppState extends State<MyApp> {
                 Expanded(
                   //color: Colors.grey[200],
                   child: ValueListenableBuilder(
-                    valueListenable: gameBox.listenable(),
+                    valueListenable: Hive.box<MediaUser>('media-users').listenable(),
                     builder: mediaListBuilder,
                   ),
                 ),
@@ -320,7 +319,7 @@ class MyAppState extends State<MyApp> {
                 color: Colors.black.withOpacity(0.5),
                 child: Center(
                   child: Text(
-                    gameBox.isNotEmpty ? gameBox.getAt(selectedGameIndex)!.media.originalName : '',
+                    UserSystem().getUserGames().isNotEmpty ? UserSystem().getUserGames()[selectedGameIndex].media.originalName : '',
                     style: const TextStyle(color: Colors.white, fontSize: 24.0),
                   ),
                 ),
@@ -377,7 +376,7 @@ class MyAppState extends State<MyApp> {
                               ...searchResults.map((result) {
                                 String gameName = result['title'];
 
-                                if(gameAlreadyInLibrary(gameName) != null /*Add here a check that the game is actually in the user's library, not the general one*/) {
+                                if(gameAlreadyInLibrary(gameName)) {
                                     return ListTile(
                                     title: Text(gameName),
                                     subtitle: const Text(
@@ -436,72 +435,11 @@ class MyAppState extends State<MyApp> {
     }
   }
 
-  Future<void> _addGame(String gameName) async {
-    Game? nullableGame = gameAlreadyInLibrary(gameName);
-
-    if(nullableGame == null) {
-      Game newGame = Game(
-        media: Media(
-          originalName: gameName,
-          description: "Add parameter/call to API for description here.",
-          releaseDate: DateTime.now() /*Add parameter/call to API for release date here.*/,
-          criticScore: -1 /*Add parameter/call to API for critic score here.*/,
-          communityScore: -1 /*Add parameter/call to API for comunity score here.*/,
-          mediaType: "Game",
-        ),
-        parentGame: null /*Add parameter/call to API to check if this is a DLC*/,
-        OSMinimum: "Minimum OS not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        OSRecommended: "Recommended OS not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        CPUMinimum: "Minimum CPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        CPURecommended: "Recommended CPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        RAMMinimum: "Minimum RAM not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        RAMRecommended: "Recommended RAM not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        HDDMinimum: "Minimum HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        HDDRecommended: "Recommended HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        GPUMinimum: "Minimum GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        GPURecommended: "Recommended GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        HLTBMainInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBMainSideInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBCompletionistInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBAllStylesInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBSoloInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBCoopInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBVersusInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBSingleplayerInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-      );
-      gameBox.add(newGame);
-      nullableGame = newGame;
-    }
-
-    // TODO: Decoment the following lines when "Current User System" is implemented
-
-    // Game game = nullableGame;
-
-    // if(true/*Add a check that the user does not have the game in the personal library*/) {
-    //   Box<MediaUser> box = Hive.box('media-users');
-    //   box.add(
-    //     MediaUser(
-    //       media: game.media,
-    //       user: currentUser /*We currently don't have this, so decoment when we do*/,
-    //       name: game.media.originalName,
-    //       userScore: 0,
-    //       addedDate: DateTime.now(),
-    //       coverImage: "placeholder.png" /*Add a basic cover image*/,
-    //       status: "Plan To Play",
-    //       series: game.media.originalName /*Add parameter/call to game series API*/,
-    //       icon: "placeholder.png" /*Add a basic cover image*/,
-    //       backgroundImage: "placeholder.png" /*Add a basic cover image*/,
-    //       lastInteracted: DateTime.now(),
-    //     ),
-    //   );
-    // }
-  }
-
   Future<void> _showSortGamesDialog(BuildContext context) {
     // Helper function, should be called when a variable gets changed
     void resetState() {
       setState(() {});
-    };
+    }
 
     return showDialog(
       context: context,
@@ -596,7 +534,7 @@ class MyAppState extends State<MyApp> {
                             ),
                           ],
                         ),
-                    ], // -------------------------------------------------------------------
+                    ],
                   ),
                 ),
               ),
@@ -611,7 +549,7 @@ class MyAppState extends State<MyApp> {
     // Helper function, should be called when a variable gets changed
     void resetState() {
       setState(() {});
-    };
+    }
 
     var tags = Hive.box<Tag>('tags');
     var genres = Hive.box<Genre>('genres');
@@ -806,7 +744,14 @@ class MyAppState extends State<MyApp> {
             ),
             TextButton(
               onPressed: () {
-                gameBox.deleteAt(index);
+                Game gameToDelete = UserSystem().getUserGames()[index];
+                for(MediaUser mu in UserSystem().currentUserMedia) {
+                  if(mu.media == gameToDelete.media) {
+                    UserSystem().currentUserMedia.remove(mu);
+                    Hive.box<MediaUser>('media-users').delete(mu);
+                    break;
+                  }
+                }
                 setState(() {
                   selectedGameIndex = 0; // Move to the first game
                 });
@@ -818,5 +763,72 @@ class MyAppState extends State<MyApp> {
         );
       },
     );
+  }
+
+  Future<void> _addGame(String gameName) async {
+    if(UserSystem().currentUser == null) {
+      return;
+    }
+
+    Game? nullableGame = gameAlreadyInDB(gameName);
+
+    if(nullableGame == null) {
+      print("newForDB");
+      Media media = Media(
+        originalName: gameName,
+        description: "Add parameter/call to API for description here.",
+        releaseDate: DateTime.now() /*Add parameter/call to API for release date here.*/,
+        criticScore: -1 /*Add parameter/call to API for critic score here.*/,
+        communityScore: -1 /*Add parameter/call to API for comunity score here.*/,
+        mediaType: "Game",
+      );
+      Game newGame = Game(
+        mediaId: media.id,
+        parentGameId: -1 /*Add parameter/call to API to check if this is a DLC*/,
+        OSMinimum: "Minimum OS not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        OSRecommended: "Recommended OS not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        CPUMinimum: "Minimum CPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        CPURecommended: "Recommended CPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        RAMMinimum: "Minimum RAM not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        RAMRecommended: "Recommended RAM not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        HDDMinimum: "Minimum HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        HDDRecommended: "Recommended HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        GPUMinimum: "Minimum GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        GPURecommended: "Recommended GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
+        HLTBMainInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBMainSideInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBCompletionistInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBAllStylesInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBSoloInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBCoopInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBVersusInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBSingleplayerInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+      );
+      await Hive.box<Media>('media').add(media);
+      await Hive.box<Game>('games').add(newGame);
+      nullableGame = newGame;
+    }
+
+    Game game = nullableGame;
+
+    if(!gameAlreadyInLibrary(game.media.originalName)) {
+      print("newForMe");
+      MediaUser mu = MediaUser(
+        mediaId: game.mediaId,
+        userId: UserSystem().currentUser!.id,
+        name: game.media.originalName,
+        userScore: -1,
+        addedDate: DateTime.now(),
+        coverImage: "placeholder.png" /*Add a basic cover image*/,
+        status: "Plan To Play",
+        series: game.media.originalName /*Add parameter/call to game series API*/,
+        icon: "placeholder.png" /*Add a basic cover image*/,
+        backgroundImage: "placeholder.png" /*Add a basic cover image*/,
+        lastInteracted: DateTime.now(),
+      );
+
+      UserSystem().currentUserMedia.add(mu);
+      await Hive.box<MediaUser>('media-users').add(mu);
+    }
   }
 }

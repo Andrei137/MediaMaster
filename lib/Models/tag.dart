@@ -1,19 +1,36 @@
 import 'package:hive/hive.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 14)
 class Tag extends HiveObject {
-  @HiveField(0)
+  // Hive fields
+  int id;
   String name;
 
-  Tag({required this.name});
+  // Automatic id generator
+  static int nextId = 0;
+
+  Tag(
+      {this.id = -1,
+      required this.name}) {
+        if(id == -1) {
+          id = nextId;
+        }
+        if(id >= nextId) {
+          nextId = id + 1;
+        }
+      }
 
   @override
-  String toString() {
-    return "(Tag name: $name)";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return id == (other as Tag).id;
   }
+  
+  @override
+  int get hashCode => id;
 }
 
 class TagAdapter extends TypeAdapter<Tag> {
@@ -23,12 +40,14 @@ class TagAdapter extends TypeAdapter<Tag> {
   @override
   Tag read(BinaryReader reader) {
     return Tag(
+      id: reader.readInt(),
       name: reader.readString(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Tag obj) {
+    writer.writeInt(obj.id);
     writer.writeString(obj.name);
   }
 }

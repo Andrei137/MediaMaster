@@ -1,39 +1,69 @@
 import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+import 'game.dart';
+
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 3)
 class Media extends HiveObject {
-  @HiveField(0)
+  // Hive fields
+  int id;
   String originalName;
-
-  @HiveField(1)
   String description;
-
-  @HiveField(2)
   DateTime releaseDate;
-
-  @HiveField(3)
   int criticScore;
-
-  @HiveField(4)
   int communityScore;
-
-  @HiveField(5)
   String mediaType;
 
+  // For ease of use
+  HiveObject? _media;
+
+  // Automatic id generator
+  static int nextId = 0;
+
   Media(
-      {required this.originalName,
+      {this.id = -1,
+      required this.originalName,
       required this.description,
       required this.releaseDate,
       required this.criticScore,
       required this.communityScore,
-      required this.mediaType});
+      required this.mediaType}) {
+        if(id == -1) {
+          id = nextId;
+        }
+        if(id >= nextId) {
+          nextId = id + 1;
+        }
+      }
 
   @override
-  String toString() {
-    return "(Name: $originalName, description: $description, releaseDate: $releaseDate, criticScore: $criticScore, communityScore: $communityScore, mediaType: $mediaType)";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return id == (other as Media).id;
+  }
+  
+  @override
+  int get hashCode => id;
+
+  HiveObject get media {
+    if(_media == null) {
+      if(mediaType == "Game") {
+        Box<Game> box = Hive.box<Game>('games');
+        for(int i = 0;i < box.length;++i) {
+          if(id == box.getAt(i)!.mediaId) {
+            _media = box.getAt(i);
+          }
+        }
+      }
+      // TODO: Implement the other types
+      if(_media == null) {
+        throw Exception("Media of id $id does not have an associated (concrete) Media object or mediaType value is wrong ($mediaType)");
+      }
+    }
+    return _media!;
   }
 }
 
@@ -44,6 +74,7 @@ class MediaAdapter extends TypeAdapter<Media> {
   @override
   Media read(BinaryReader reader) {
     return Media(
+      id: reader.readInt(),
       originalName: reader.readString(),
       description: reader.readString(),
       releaseDate: reader.read(),
@@ -55,6 +86,7 @@ class MediaAdapter extends TypeAdapter<Media> {
 
   @override
   void write(BinaryWriter writer, Media obj) {
+    writer.writeInt(obj.id);
     writer.writeString(obj.originalName);
     writer.writeString(obj.description);
     writer.write(obj.releaseDate);

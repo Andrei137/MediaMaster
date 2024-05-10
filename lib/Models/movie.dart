@@ -1,28 +1,58 @@
 import 'package:hive/hive.dart';
 import 'media.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 10)
 class Movie extends HiveObject {
-  @HiveField(0)
-  Media media;
-
-  @HiveField(1)
+  // Hive fields
+  int id;
+  int mediaId;
   String originalLanguage;
-
-  @HiveField(2)
   int durationInseconds;
 
+  // For ease of use
+  Media? _media;
+
+  // Automatic id generator
+  static int nextId = 0;
+
   Movie(
-      {required this.media,
+      {this.id = -1,
+      required this.mediaId,
       required this.originalLanguage,
-      required this.durationInseconds});
+      required this.durationInseconds}) {
+        if(id == -1) {
+          id = nextId;
+        }
+        if(id >= nextId) {
+          nextId = id + 1;
+        }
+      }
 
   @override
-  String toString() {
-    return "(Media: ${media.key}, originalLanguage: $originalLanguage, durationInseconds: $durationInseconds)";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return id == (other as Movie).id;
+  }
+  
+  @override
+  int get hashCode => id;
+
+  Media get media {
+    if(_media == null) {
+      Box<Media> box = Hive.box<Media>('media');
+      for(int i = 0;i < box.length;++i) {
+        if(mediaId == box.getAt(i)!.id) {
+          _media = box.getAt(i);
+        }
+      }
+      if(_media == null) {
+        throw Exception("Movie of id $id does not have an associated Media object or mediaId value is wrong ($mediaId)");
+      }
+    }
+    return _media!;
   }
 }
 
@@ -33,7 +63,8 @@ class MovieAdapter extends TypeAdapter<Movie> {
   @override
   Movie read(BinaryReader reader) {
     return Movie(
-      media: reader.read(),
+      id: reader.readInt(),
+      mediaId: reader.readInt(),
       originalLanguage: reader.readString(),
       durationInseconds: reader.readInt(),
     );
@@ -41,7 +72,8 @@ class MovieAdapter extends TypeAdapter<Movie> {
 
   @override
   void write(BinaryWriter writer, Movie obj) {
-    writer.write(obj.media);
+    writer.writeInt(obj.id);
+    writer.writeInt(obj.mediaId);
     writer.writeString(obj.originalLanguage);
     writer.writeInt(obj.durationInseconds);
   }

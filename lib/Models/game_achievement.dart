@@ -1,26 +1,58 @@
 import 'package:hive/hive.dart';
 import 'game.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 8)
 class GameAchievement extends HiveObject {
-  @HiveField(0)
-  Game game;
-
-  @HiveField(1)
+  // Hive fields
+  int id;
+  int gameId;
   String name;
-
-  @HiveField(2)
   String description;
 
-  GameAchievement(
-      {required this.game, required this.name, required this.description});
+  // For ease of use
+  Game? _game;
 
+  // Automatic id generator
+  static int nextId = 0;
+
+  GameAchievement(
+      {this.id = -1,
+      required this.gameId,
+      required this.name,
+      required this.description}) {
+        if(id == -1) {
+          id = nextId;
+        }
+        if(id >= nextId) {
+          nextId = id + 1;
+        }
+      }
+  
   @override
-  String toString() {
-    return "(Game: ${game.key}, name: $name, description: $description)";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return id == (other as GameAchievement).id;
+  }
+  
+  @override
+  int get hashCode => id;
+
+  Game get game {
+    if(_game == null) {
+      Box<Game> box = Hive.box<Game>('games');
+      for(int i = 0;i < box.length;++i) {
+        if(gameId == box.getAt(i)!.id) {
+          _game = box.getAt(i);
+        }
+      }
+      if(_game == null) {
+        throw Exception("Game Achievement of id $id does not have an associated Game object or gameId value is wrong ($gameId)");
+      }
+    }
+    return _game!;
   }
 }
 
@@ -31,7 +63,8 @@ class GameAchievementAdapter extends TypeAdapter<GameAchievement> {
   @override
   GameAchievement read(BinaryReader reader) {
     return GameAchievement(
-      game: reader.read(),
+      id: reader.readInt(),
+      gameId: reader.read(),
       name: reader.readString(),
       description: reader.readString(),
     );
@@ -39,7 +72,8 @@ class GameAchievementAdapter extends TypeAdapter<GameAchievement> {
 
   @override
   void write(BinaryWriter writer, GameAchievement obj) {
-    writer.write(obj.game);
+    writer.writeInt(obj.id);
+    writer.writeInt(obj.gameId);
     writer.writeString(obj.name);
     writer.writeString(obj.description);
   }

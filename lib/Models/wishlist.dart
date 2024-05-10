@@ -2,22 +2,58 @@ import 'package:hive/hive.dart';
 import 'media.dart';
 import 'user.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 4)
 class Wishlist extends HiveObject {
-  @HiveField(0)
-  Media media;
+  // Hive fields
+  int mediaId;
+  int userId;
 
-  @HiveField(1)
-  User user;
+  // For ease of use
+  Media? _media;
+  User? _user;
 
-  Wishlist({required this.media, required this.user});
+  Wishlist({required this.mediaId, required this.userId});
 
   @override
-  String toString() {
-    return "(Media: ${media.key}, user: ${user.username})";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return mediaId == (other as Wishlist).mediaId && userId == other.userId;
+  }
+  
+  @override
+  int get hashCode => Object.hash(mediaId, userId);
+
+  Media get media {
+    if(_media == null) {
+      Box<Media> box = Hive.box<Media>('media');
+      for(int i = 0;i < box.length;++i) {
+        if(mediaId == box.getAt(i)!.id) {
+          _media = box.getAt(i);
+        }
+      }
+      if(_media == null) {
+        throw Exception("Wishlist of mediaId $mediaId and userId $userId does not have an associated Media object or mediaId value is wrong");
+      }
+    }
+    return _media!;
+  }
+
+  User get user {
+    if(_user == null) {
+      Box<User> box = Hive.box<User>('users');
+      for(int i = 0;i < box.length;++i) {
+        if(userId == box.getAt(i)!.id) {
+          _user = box.getAt(i);
+        }
+      }
+      if(_user == null) {
+        throw Exception("Wishlist of mediaId $mediaId and userId $userId does not have an associated User object or userId value is wrong");
+      }
+    }
+    return _user!;
   }
 }
 
@@ -28,8 +64,8 @@ class WishlistAdapter extends TypeAdapter<Wishlist> {
   @override
   Wishlist read(BinaryReader reader) {
     return Wishlist(
-      media: reader.read(),
-      user: reader.read(),
+      mediaId: reader.readInt(),
+      userId: reader.readInt(),
     );
   }
 

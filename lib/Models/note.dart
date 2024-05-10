@@ -2,31 +2,61 @@ import 'package:hive/hive.dart';
 import 'media.dart';
 import 'user.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 5)
 class Note extends HiveObject {
-  @HiveField(0)
-  Media media;
-
-  @HiveField(1)
-  User user;
-
-  @HiveField(2)
+  // Hive fields
+  int mediaId;
+  int userId;
   String content;
-
-  @HiveField(3)
   DateTime creationDate = DateTime.now();
-
-  @HiveField(4)
   DateTime modifiedDate = DateTime.now();
 
-  Note({required this.media, required this.user, required this.content});
+  // For ease of use
+  Media? _media;
+  User? _user;
+
+  Note({required this.mediaId, required this.userId, required this.content});
 
   @override
-  String toString() {
-    return "(Media: ${media.key}, user: ${user.username}, content: $content, creationDate: $creationDate, modifiedDate: $modifiedDate)";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return userId == (other as Note).userId && mediaId == other.mediaId;
+  }
+  
+  @override
+  int get hashCode => Object.hash(mediaId, userId);
+
+  User get user {
+    if(_user == null) {
+      Box<User> box = Hive.box<User>('users');
+      for(int i = 0;i < box.length;++i) {
+        if(userId == box.getAt(i)!.id) {
+          _user = box.getAt(i);
+        }
+      }
+      if(_user == null) {
+        throw Exception("Note of userId $userId and mediaId $mediaId does not have an associated User object or userId value is wrong");
+      }
+    }
+    return _user!;
+  }
+
+  Media get media {
+    if(_media == null) {
+      Box<Media> box = Hive.box<Media>('media');
+      for(int i = 0;i < box.length;++i) {
+        if(mediaId == box.getAt(i)!.id) {
+          _media = box.getAt(i);
+        }
+      }
+      if(_media == null) {
+        throw Exception("Note of userId $userId and mediaId $mediaId does not have an associated Media object or mediaId value is wrong");
+      }
+    }
+    return _media!;
   }
 }
 
@@ -37,8 +67,8 @@ class NoteAdapter extends TypeAdapter<Note> {
   @override
   Note read(BinaryReader reader) {
     return Note(
-      media: reader.read(),
-      user: reader.read(),
+      mediaId: reader.readInt(),
+      userId: reader.readInt(),
       content: reader.readString(),
     )
       ..creationDate = reader.read()
@@ -47,8 +77,8 @@ class NoteAdapter extends TypeAdapter<Note> {
 
   @override
   void write(BinaryWriter writer, Note obj) {
-    writer.write(obj.media);
-    writer.write(obj.user);
+    writer.write(obj.mediaId);
+    writer.write(obj.userId);
     writer.writeString(obj.content);
     writer.write(obj.creationDate);
     writer.write(obj.modifiedDate);

@@ -2,22 +2,58 @@ import 'package:hive/hive.dart';
 import 'media.dart';
 import 'publisher.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 21)
 class MediaPublisher extends HiveObject {
-  @HiveField(0)
-  Media media;
+  // Hive fields
+  int mediaId;
+  int publisherId;
 
-  @HiveField(1)
-  Publisher publisher;
+  // For ease of use
+  Media? _media;
+  Publisher? _publisher;
 
-  MediaPublisher({required this.media, required this.publisher});
+  MediaPublisher({required this.mediaId, required this.publisherId});
 
   @override
-  String toString() {
-    return "(Media: ${media.key}, publisher: ${publisher.key})";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return mediaId == (other as MediaPublisher).mediaId && publisherId == other.publisherId;
+  }
+  
+  @override
+  int get hashCode => Object.hash(mediaId, publisherId);
+
+  Media get media {
+    if(_media == null) {
+      Box<Media> box = Hive.box<Media>('media');
+      for(int i = 0;i < box.length;++i) {
+        if(mediaId == box.getAt(i)!.id) {
+          _media = box.getAt(i);
+        }
+      }
+      if(_media == null) {
+        throw Exception("MediaPublisher of mediaId $mediaId and publisherId $publisherId does not have an associated Media object or mediaId value is wrong");
+      }
+    }
+    return _media!;
+  }
+
+  Publisher get publisher {
+    if(_publisher == null) {
+      Box<Publisher> box = Hive.box<Publisher>('publishers');
+      for(int i = 0;i < box.length;++i) {
+        if(publisherId == box.getAt(i)!.id) {
+          _publisher = box.getAt(i);
+        }
+      }
+      if(_publisher == null) {
+        throw Exception("MediaPublisher of mediaId $mediaId and publisherId $publisherId does not have an associated Publisher object or publisherId value is wrong");
+      }
+    }
+    return _publisher!;
   }
 }
 
@@ -28,14 +64,14 @@ class MediaPublisherAdapter extends TypeAdapter<MediaPublisher> {
   @override
   MediaPublisher read(BinaryReader reader) {
     return MediaPublisher(
-      media: reader.read(),
-      publisher: reader.read(),
+      mediaId: reader.readInt(),
+      publisherId: reader.readInt(),
     );
   }
 
   @override
   void write(BinaryWriter writer, MediaPublisher obj) {
-    writer.write(obj.media);
-    writer.write(obj.publisher);
+    writer.writeInt(obj.mediaId);
+    writer.writeInt(obj.publisherId);
   }
 }

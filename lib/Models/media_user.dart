@@ -2,53 +2,31 @@ import 'package:hive/hive.dart';
 import 'media.dart';
 import 'user.dart';
 
-// Don't change the numbers below (HiveType and HiveField).
+// Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
-// HiveObject handles primary key automatically and allows relationships between objects
-@HiveType(typeId: 6)
 class MediaUser extends HiveObject {
-  @HiveField(0)
-  Media media;
-
-  @HiveField(1)
-  User user;
-
-  @HiveField(2)
+  // Hive fields
+  int mediaId;
+  int userId;
   String name;
-
-  @HiveField(3)
   int userScore;
-
-  @HiveField(4)
   DateTime addedDate;
-
-  @HiveField(5)
   String coverImage;
-
-  @HiveField(6)
   String status;
-
-  @HiveField(7)
   String series;
-
-  @HiveField(8)
   String icon;
-
-  @HiveField(9)
   String backgroundImage;
-
-  @HiveField(10)
   DateTime lastInteracted;
-
-  @HiveField(11)
   int gameTime;
-
-  @HiveField(12)
   int bookReadPages;
 
+  // For ease of use
+  Media? _media;
+  User? _user;
+
   MediaUser(
-      {required this.media,
-      required this.user,
+      {required this.mediaId,
+      required this.userId,
       required this.name,
       required this.userScore,
       required this.addedDate,
@@ -62,8 +40,44 @@ class MediaUser extends HiveObject {
       this.bookReadPages = 0});
 
   @override
-  String toString() {
-    return "(Media: ${media.key}, user: ${user.username}, name: $name, addedDate: $addedDate, status: $status)";
+  bool operator==(Object other) {
+    if(runtimeType != other.runtimeType) {
+      return false;
+    }
+    return mediaId == (other as MediaUser).mediaId && userId == other.userId;
+  }
+  
+  @override
+  int get hashCode => Object.hash(mediaId, userId);
+
+  Media get media {
+    if(_media == null) {
+      Box<Media> box = Hive.box<Media>('media');
+      for(int i = 0;i < box.length;++i) {
+        if(mediaId == box.getAt(i)!.id) {
+          _media = box.getAt(i);
+        }
+      }
+      if(_media == null) {
+        throw Exception("MediaUser of mediaId $mediaId and userId $userId does not have an associated Media object or mediaId value is wrong");
+      }
+    }
+    return _media!;
+  }
+
+  User get user {
+    if(_user == null) {
+      Box<User> box = Hive.box<User>('users');
+      for(int i = 0;i < box.length;++i) {
+        if(userId == box.getAt(i)!.id) {
+          _user = box.getAt(i);
+        }
+      }
+      if(_user == null) {
+        throw Exception("MediaUser of mediaId $mediaId and userId $userId does not have an associated User object or userId value is wrong");
+      }
+    }
+    return _user!;
   }
 }
 
@@ -74,8 +88,8 @@ class MediaUserAdapter extends TypeAdapter<MediaUser> {
   @override
   MediaUser read(BinaryReader reader) {
     return MediaUser(
-      media: reader.read(),
-      user: reader.read(),
+      mediaId: reader.readInt(),
+      userId: reader.readInt(),
       name: reader.readString(),
       userScore: reader.readInt(),
       addedDate: reader.read(),
@@ -92,8 +106,8 @@ class MediaUserAdapter extends TypeAdapter<MediaUser> {
 
   @override
   void write(BinaryWriter writer, MediaUser obj) {
-    writer.write(obj.media);
-    writer.write(obj.user);
+    writer.writeInt(obj.mediaId);
+    writer.writeInt(obj.userId);
     writer.writeString(obj.name);
     writer.writeInt(obj.userScore);
     writer.write(obj.addedDate);
