@@ -6,9 +6,9 @@ import 'media.dart';
 class Book extends HiveObject {
   // Hive fields
   int id;
+  int mediaId;
   String originalLanguage;
   int totalPages;
-  int mediaId;
 
   // For ease of use
   Media? _media;

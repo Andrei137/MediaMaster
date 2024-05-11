@@ -6,6 +6,7 @@ import 'user.dart';
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class Note extends HiveObject {
   // Hive fields
+  int id;
   int mediaId;
   int userId;
   String content;
@@ -16,18 +17,32 @@ class Note extends HiveObject {
   Media? _media;
   User? _user;
 
-  Note({required this.mediaId, required this.userId, required this.content});
+  // Automatic id generator
+  static int nextId = 0;
+
+  Note(
+      {this.id = -1,
+      required this.mediaId,
+      required this.userId,
+      required this.content}) {
+        if(id == -1) {
+          id = nextId;
+        }
+        if(id >= nextId) {
+          nextId = id + 1;
+        }
+      }
 
   @override
   bool operator==(Object other) {
     if(runtimeType != other.runtimeType) {
       return false;
     }
-    return userId == (other as Note).userId && mediaId == other.mediaId;
+    return id == (other as Note).id;
   }
   
   @override
-  int get hashCode => Object.hash(mediaId, userId);
+  int get hashCode => id;
 
   User get user {
     if(_user == null) {
@@ -67,6 +82,7 @@ class NoteAdapter extends TypeAdapter<Note> {
   @override
   Note read(BinaryReader reader) {
     return Note(
+      id: reader.readInt(),
       mediaId: reader.readInt(),
       userId: reader.readInt(),
       content: reader.readString(),
@@ -77,8 +93,9 @@ class NoteAdapter extends TypeAdapter<Note> {
 
   @override
   void write(BinaryWriter writer, Note obj) {
-    writer.write(obj.mediaId);
-    writer.write(obj.userId);
+    writer.writeInt(obj.id);
+    writer.writeInt(obj.mediaId);
+    writer.writeInt(obj.userId);
     writer.writeString(obj.content);
     writer.write(obj.creationDate);
     writer.write(obj.modifiedDate);

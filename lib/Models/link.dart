@@ -6,13 +6,15 @@ class Link extends HiveObject {
   // Hive fields
   int id;
   String name;
+  String href;
 
   // Automatic id generator
   static int nextId = 0;
 
   Link(
       {this.id = -1,
-      required this.name}) {
+      required this.name,
+      required this.href}) {
         if(id == -1) {
           id = nextId;
         }
@@ -42,6 +44,7 @@ class LinkAdapter extends TypeAdapter<Link> {
     return Link(
       id: reader.readInt(),
       name: reader.readString(),
+      href: reader.readString(),
     );
   }
 
@@ -49,5 +52,6 @@ class LinkAdapter extends TypeAdapter<Link> {
   void write(BinaryWriter writer, Link obj) {
     writer.writeInt(obj.id);
     writer.writeString(obj.name);
+    writer.writeString(obj.href);
   }
 }
