@@ -11,6 +11,8 @@ import 'Models/game.dart';
 import 'Models/genre.dart';
 import 'Models/media.dart';
 import 'Models/media_user.dart';
+import 'Models/media_user_tag.dart';
+import 'Models/media_user_genre.dart';
 import 'Models/tag.dart';
 
 import 'UserSystem.dart';
@@ -106,7 +108,9 @@ class MyAppState extends State<MyApp> {
     ),
   ];
   bool filterAll = true;
-  Set<int> selectedGenres = {}, selectedTags = {};
+  Set<int> selectedGenresIndices = {}, selectedTagsIndices = {};
+  late Box<Tag> tags;
+  late Box<Genre> genres;
 
   // Placeholder image URL
   static const String placeholderImageUrl =
@@ -116,15 +120,55 @@ class MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     UserSystem().loadUserContent();
+    tags = Hive.box<Tag>('tags');
+    genres = Hive.box<Genre>('genres');
   }
 
   ListView mediaListBuilder(BuildContext context, Box<MediaUser> _, Widget? __) {
     List<ListTile> listTiles = List.from([]);
     List<Game> userGames = UserSystem().getUserGames();
     List<Pair<Game, int> > gamesIndices = List.from([]);
+    Set<Genre> selectedGenres = {};
+    Set<Tag> selectedTags = {};
+
+    for(int i in selectedGenresIndices) {
+      selectedGenres.add(genres.getAt(i)!);
+    }
+    for(int i in selectedTagsIndices) {
+      selectedTags.add(tags.getAt(i)!);
+    }
 
     for(int i = 0;i < userGames.length;++i) {
-      gamesIndices.add(Pair(userGames[i], i));
+      bool shouldAdd = true;
+      if(selectedGenresIndices.isNotEmpty || selectedTagsIndices.isNotEmpty) {
+        int conditionsMet = 0;
+        for(MediaUserTag mut in UserSystem().getUserTags()) {
+          if(userGames[i].media == mut.media && selectedTags.contains(mut.tag)) {
+            ++conditionsMet;
+            if(!filterAll) {
+              break;
+            }
+          }
+        }
+        for(MediaUserGenre mug in UserSystem().getUserGenres()) {
+          if(userGames[i].media == mug.media && selectedGenres.contains(mug.genre)) {
+            ++conditionsMet;
+            if(!filterAll) {
+              break;
+            }
+          }
+        }
+
+        if(filterAll) {
+          shouldAdd = (selectedGenres.length + selectedTags.length == conditionsMet);
+        }
+        else if(conditionsMet == 0) {
+          shouldAdd = false;
+        }
+      }
+      if(shouldAdd) {
+        gamesIndices.add(Pair(userGames[i], i));
+      }
     }
 
     gamesIndices.sort(
@@ -551,9 +595,6 @@ class MyAppState extends State<MyApp> {
       setState(() {});
     }
 
-    var tags = Hive.box<Tag>('tags');
-    var genres = Hive.box<Genre>('genres');
-
     return showDialog(
       context: context,
       builder: (context) {
@@ -628,7 +669,7 @@ class MyAppState extends State<MyApp> {
                           ),
                           IconButton(
                             onPressed: () => setState(() {
-                              selectedGenres.clear();
+                              selectedGenresIndices.clear();
                               resetState();
                             }),
                             icon: const Icon(
@@ -641,14 +682,14 @@ class MyAppState extends State<MyApp> {
                         Row(
                           children: [
                             Checkbox(
-                              value: selectedGenres.contains(i),
+                              value: selectedGenresIndices.contains(i),
                               onChanged: (value) {
                                 setState(() {
                                   if(value == true) {
-                                    selectedGenres.add(i);
+                                    selectedGenresIndices.add(i);
                                   }
                                   else {
-                                    selectedGenres.remove(i);
+                                    selectedGenresIndices.remove(i);
                                   }
                                   resetState();
                                 });
@@ -674,7 +715,7 @@ class MyAppState extends State<MyApp> {
                           ),
                           IconButton(
                             onPressed: () => setState(() {
-                              selectedTags.clear();
+                              selectedTagsIndices.clear();
                               resetState();
                             }),
                             icon: const Icon(
@@ -687,14 +728,14 @@ class MyAppState extends State<MyApp> {
                         Row(
                           children: [
                             Checkbox(
-                              value: selectedTags.contains(i),
+                              value: selectedTagsIndices.contains(i),
                               onChanged: (value) {
                                 setState(() {
                                   if(value == true) {
-                                    selectedTags.add(i);
+                                    selectedTagsIndices.add(i);
                                   }
                                   else {
-                                    selectedTags.remove(i);
+                                    selectedTagsIndices.remove(i);
                                   }
                                   resetState();
                                 });
