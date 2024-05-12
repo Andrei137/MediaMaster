@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'Utils.dart';
@@ -114,7 +115,10 @@ class MyAppState extends State<MyApp> {
 
   // Placeholder image URL
   static const String placeholderImageUrl =
-      'https://uncensoredtactical.com/wp-content/uploads/2021/04/Placeholder-1920x1080-1.jpg';
+      //'https://uncensoredtactical.com/wp-content/uploads/2021/04/Placeholder-1920x1080-1.jpg';
+      'https://wallpaperaccess.com/full/5341085.jpg';
+  static const String placeholderCoverUrl =
+      'https://www.pcgamesarchive.com/wp-content/uploads/2021/07/Hollow-Knight-cover.jpg';
 
   @override
   void initState() {
@@ -359,17 +363,9 @@ class MyAppState extends State<MyApp> {
                   fit: BoxFit.cover,
                 ),
               ),
-              child: Container(
-                color: Colors.black.withOpacity(0.5),
-                child: Center(
-                  child: Text(
-                    UserSystem().getUserGames().isNotEmpty ? UserSystem().getUserGames()[selectedGameIndex].media.originalName : '',
-                    style: const TextStyle(color: Colors.white, fontSize: 24.0),
-                  ),
-                ),
+              child: _displayGame(UserSystem().getUserGames().isNotEmpty ? UserSystem().getUserGames()[selectedGameIndex] : null),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -871,5 +867,215 @@ class MyAppState extends State<MyApp> {
       UserSystem().currentUserMedia.add(mu);
       await Hive.box<MediaUser>('media-users').add(mu);
     }
+  }
+
+  Widget _displayGame(Game? game) {
+    if(game == null) {
+      return Container(
+        color: Colors.black.withOpacity(0.5),
+        child: const Center(
+          child: Text(
+            "Choose a game",
+            style: TextStyle(color: Colors.white, fontSize: 24.0),
+          ),
+        )
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.only(
+        top: 200,
+      ),
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: NetworkImage(
+            placeholderImageUrl,
+          ),
+          fit: BoxFit.fill,
+        ),
+      ),
+      child: Container(
+        color: const Color.fromARGB(224, 64, 64, 64),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Container( // Play button
+                    margin: const EdgeInsets.all(10),
+                    child: TextButton(
+                      style: ButtonStyle(
+                        backgroundColor: const MaterialStatePropertyAll(Colors.lightGreen),
+                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                          const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                          ),
+                        ),
+                      ),
+                      onPressed: () {
+                        playGame(game);
+                      },
+                      child: const Column(
+                        children: [
+                          Text(
+                            "Play",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 24.0,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          Text(
+                            "(currently unnavailable)",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 12.0,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container( // HLTB button
+                    margin: const EdgeInsets.all(10),
+                    child: IconButton(
+                      onPressed: () {
+                        _showHLTBDialog(
+                          game,
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.access_alarm_outlined,
+                        color: Colors.white,
+                      ),
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 32, 32, 32)),
+                      ),
+                    ),
+                  ),
+                  Container( // Sys Check button
+                    margin: const EdgeInsets.all(10),
+                    child: IconButton(
+                      onPressed: () {
+                        runSysCheck(game);
+                      },
+                      icon: const Icon(
+                        Icons.monitor,
+                        color: Colors.white,
+                      ),
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 32, 32, 32)),
+                      ),
+                    ),
+                  ),
+                  Container( // Settings button
+                    margin: const EdgeInsets.all(10),
+                    child: IconButton(
+                      onPressed: () {
+                        _showGameSettingsDialog(game);
+                      },
+                      icon: const Icon(
+                        Icons.settings,
+                        color: Colors.white,
+                      ),
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 32, 32, 32)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Container( // Cover
+                      margin: const EdgeInsets.all(20,),
+                      child: const Image(
+                        image: NetworkImage(
+                          // TODO: Add link to cover image
+                          placeholderCoverUrl,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 5,
+                    child: Container( // Description
+                      margin: const EdgeInsets.all(10),
+                      child: Text(
+                        game.media.description,
+                        style: const TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Container( // Game data (publisher, retailer, etc.)
+                      margin: const EdgeInsets.all(10),
+                      child: const Column(
+                        children: [
+                          Text(
+                            "Publisher: Add getPublisher(game) function call",
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            "Developper: Add getCreator(game) function call",
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            "Developper: Add getCreator(game) function call",
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              // The next 2 widgets are here because I want to show scollability, they are not final and they will be replaced by the sticky notes soon
+              Center(
+                child: Text(
+                  game.media.originalName,
+                  style: const TextStyle(color: Colors.white, fontSize: 24.0),
+                ),
+              ),
+              Center(
+                child: Text(
+                  game.media.originalName,
+                  style: const TextStyle(color: Colors.white, fontSize: 24.0),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  void playGame(Game game) {
+    // TODO: This function gets invoked by the play button. For now, until we integrate Steam/Epic/GOG/whatever this will be empty and the play button will do nothing
+  }
+  
+  void _showHLTBDialog(Game game) {
+    // TODO: Implement this
+  }
+  
+  void runSysCheck(Game game) {
+    // TODO: This function gets invoked by the system check button. For now, until we integrate some way of checking the system capabilities it will do nothing
+  }
+  
+  void _showGameSettingsDialog(Game game) {
+    // TODO: This function gets invoked by the game settings button. Until implemented, that button will do nothing
   }
 }
