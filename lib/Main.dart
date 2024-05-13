@@ -881,166 +881,161 @@ class MyAppState extends State<MyApp> {
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.only(
-        top: 200,
-      ),
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: NetworkImage(
-            placeholderImageUrl,
-          ),
-          fit: BoxFit.fill,
-        ),
-      ),
+    return SizedBox.expand(
       child: Container(
-        color: const Color.fromARGB(224, 64, 64, 64),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Container( // Play button
-                    margin: const EdgeInsets.all(10),
-                    child: TextButton(
-                      style: ButtonStyle(
-                        backgroundColor: const MaterialStatePropertyAll(Colors.lightGreen),
-                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                          const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                          ),
-                        ),
-                      ),
-                      onPressed: () {
-                        playGame(game);
-                      },
-                      child: const Column(
-                        children: [
-                          Text(
-                            "Play",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 24.0,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            "(currently unnavailable)",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 12.0,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
+        padding: const EdgeInsets.only(
+          top: 200,
+        ),
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: NetworkImage(
+              placeholderImageUrl,
+            ),
+            fit: BoxFit.fill,
+          ),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          color: const Color.fromARGB(224, 64, 64, 64),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Center( // Game name; TODO: Remove this or move it or something
+                  child: Text(
+                    game.media.originalName,
+                    style: const TextStyle(color: Colors.white, fontSize: 24.0),
                   ),
-                  Container( // HLTB button
-                    margin: const EdgeInsets.all(10),
-                    child: IconButton(
-                      onPressed: () {
-                        _showHLTBDialog(
-                          game,
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.access_alarm_outlined,
-                        color: Colors.white,
-                      ),
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 32, 32, 32)),
-                      ),
-                    ),
-                  ),
-                  Container( // Sys Check button
-                    margin: const EdgeInsets.all(10),
-                    child: IconButton(
-                      onPressed: () {
-                        runSysCheck(game);
-                      },
-                      icon: const Icon(
-                        Icons.monitor,
-                        color: Colors.white,
-                      ),
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 32, 32, 32)),
-                      ),
-                    ),
-                  ),
-                  Container( // Settings button
-                    margin: const EdgeInsets.all(10),
-                    child: IconButton(
-                      onPressed: () {
-                        _showGameSettingsDialog(game);
-                      },
-                      icon: const Icon(
-                        Icons.settings,
-                        color: Colors.white,
-                      ),
-                      style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 32, 32, 32)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Container( // Cover
-                      margin: const EdgeInsets.all(20,),
-                      child: const Image(
-                        image: NetworkImage(
-                          // TODO: Add link to cover image
-                          placeholderCoverUrl,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 5,
-                    child: Container( // Description
+                ),
+                Row(
+                  children: [
+                    Container( // Play button
                       margin: const EdgeInsets.all(10),
-                      child: Text(
-                        game.media.description,
-                        style: const TextStyle(
+                      child: TextButton(
+                        style: ButtonStyle(
+                          backgroundColor: const MaterialStatePropertyAll(Colors.lightGreen),
+                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                            const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                            ),
+                          ),
+                        ),
+                        onPressed: () {
+                          playGame(game);
+                        },
+                        child: const Column(
+                          children: [
+                            Text(
+                              "Play",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 24.0,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              "(currently unnavailable)",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 12.0,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container( // HLTB button
+                      margin: const EdgeInsets.all(10),
+                      child: IconButton(
+                        onPressed: () {
+                          _showHLTBDialog(
+                            game,
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.access_alarm_outlined,
                           color: Colors.white,
                         ),
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 32, 32, 32)),
+                        ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Container( // Game data (publisher, retailer, etc.)
+                    Container( // Sys Check button
                       margin: const EdgeInsets.all(10),
-                      child: Column(
-                        children: [
-                          game.media.getPublishersWidget(),
-                          game.media.getCreatorsWidget(),
-                          game.media.getPlatformsWidget(),
-                        ],
+                      child: IconButton(
+                        onPressed: () {
+                          runSysCheck(game);
+                        },
+                        icon: const Icon(
+                          Icons.monitor,
+                          color: Colors.white,
+                        ),
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 32, 32, 32)),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              
-              // The next 2 widgets are here because I want to show scollability, they are not final and they will be replaced by the sticky notes soon
-              Center(
-                child: Text(
-                  game.media.originalName,
-                  style: const TextStyle(color: Colors.white, fontSize: 24.0),
+                    Container( // Settings button
+                      margin: const EdgeInsets.all(10),
+                      child: IconButton(
+                        onPressed: () {
+                          _showGameSettingsDialog(game);
+                        },
+                        icon: const Icon(
+                          Icons.settings,
+                          color: Colors.white,
+                        ),
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 32, 32, 32)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Center(
-                child: Text(
-                  game.media.originalName,
-                  style: const TextStyle(color: Colors.white, fontSize: 24.0),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Container( // Cover
+                        margin: const EdgeInsets.all(20,),
+                        child: const Image(
+                          image: NetworkImage(
+                            // TODO: Add link to cover image
+                            placeholderCoverUrl,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 5,
+                      child: Container( // Description
+                        margin: const EdgeInsets.all(10),
+                        child: Text(
+                          game.media.description,
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Container( // Game data (publisher, retailer, etc.)
+                        margin: const EdgeInsets.all(10),
+                        child: Column(
+                          children: [
+                            game.media.getPublishersWidget(),
+                            game.media.getCreatorsWidget(),
+                            game.media.getPlatformsWidget(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
