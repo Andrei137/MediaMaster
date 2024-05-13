@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:mediamaster/Models/note.dart';
 import 'Utils.dart';
 import 'package:pair/pair.dart';
 
@@ -891,8 +892,9 @@ class MyAppState extends State<MyApp> {
             image: NetworkImage(
               placeholderImageUrl,
             ),
-            fit: BoxFit.fill,
+            alignment: Alignment.topCenter,
           ),
+          color: Colors.black,
         ),
         child: Container(
           padding: const EdgeInsets.all(10),
@@ -1034,6 +1036,11 @@ class MyAppState extends State<MyApp> {
                     ),
                   ],
                 ),
+                renderNotes(
+                  UserSystem().getUserNotes(
+                    game.media,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1056,5 +1063,27 @@ class MyAppState extends State<MyApp> {
   
   void _showGameSettingsDialog(Game game) {
     // TODO: This function gets invoked by the game settings button. Until implemented, that button will do nothing
+  }
+
+  Widget renderNotes(Set<Note> notes) {
+    // TODO: Remove this once we have a way to add/remove Notes dinamically
+    notes.add(
+      Note(
+        mediaId: UserSystem().getUserGames()[selectedGameIndex].mediaId,
+        userId: UserSystem().currentUser!.id,
+        content: "Sticky 1",
+      ),
+    );
+    return Column(
+      children: [
+        for(Note note in notes)
+          Text(
+            note.content,
+            style: const TextStyle(
+              color: Colors.white,
+            ),
+          ),
+      ],
+    );
   }
 }

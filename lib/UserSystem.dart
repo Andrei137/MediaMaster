@@ -1,9 +1,11 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'Models/game.dart';
+import 'Models/media.dart';
 import 'Models/media_user.dart';
 import 'Models/media_user_tag.dart';
 import 'Models/media_user_genre.dart';
+import 'Models/note.dart';
 import 'Models/user.dart';
 
 class UserSystem {
@@ -25,6 +27,7 @@ class UserSystem {
   Set<MediaUser> currentUserMedia = {};
   Set<MediaUserTag> currentUserTags = {};
   Set<MediaUserGenre> currentUserGenres = {};
+  Set<Note> currentUserNotes = {};
 
   void init() {
     var users = Hive.box<User>('users');
@@ -44,9 +47,10 @@ class UserSystem {
   }
 
   void clearUserData() {
+    currentUserGenres.clear();
+    currentUserNotes.clear();
     currentUserMedia.clear();
     currentUserTags.clear();
-    currentUserGenres.clear();
   }
 
   List<Game> getUserGames() {
@@ -61,33 +65,34 @@ class UserSystem {
     return currentUserTags;
   }
 
+  Set<Note> getUserNotes(Media media) {
+    return Set.from(currentUserNotes.where((note) => note.mediaId == media.id));
+  }
+
   Future<void> loadUserContent() async {
     clearUserData();
 
     if(currentUser != null) {
-      var mediaUsers = Hive.box<MediaUser>('media-users');
-      for(int i = 0;i < mediaUsers.length;++i) {
-        MediaUser mu = mediaUsers.getAt(i)!;
-        if(mu.user == currentUser) {
-          currentUserMedia.add(mu);
-        }
-      }
-
-      var mediaUserTags = Hive.box<MediaUserTag>('media-user-tags');
-      for(int i = 0;i < mediaUserTags.length;++i) {
-        MediaUserTag mut = mediaUserTags.getAt(i)!;
-        if(mut.user == currentUser) {
-          currentUserTags.add(mut);
-        }
-      }
-
-      var mediaUserGenres = Hive.box<MediaUserGenre>('media-user-genres');
-      for(int i = 0;i < mediaUserGenres.length;++i) {
-        MediaUserGenre mug = mediaUserGenres.getAt(i)!;
-        if(mug.user == currentUser) {
-          currentUserGenres.add(mug);
-        }
-      }
+      currentUserGenres = Set.from(
+        Hive.box<MediaUserGenre>('media-user-genres')
+          .values
+          .where((mug) => mug.user == currentUser),
+      );
+      currentUserMedia = Set.from(
+        Hive.box<MediaUser>('media-users')
+          .values
+          .where((mu) => mu.user == currentUser),
+      );
+      currentUserNotes = Set.from(
+        Hive.box<Note>('notes')
+        .values
+        .where((note) => note.user == currentUser),
+      );
+      currentUserTags = Set.from(
+        Hive.box<MediaUserTag>('media-user-tags')
+          .values
+          .where((mut) => mut.user == currentUser),
+        );
     }
   }
 }
