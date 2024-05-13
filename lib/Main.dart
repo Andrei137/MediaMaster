@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'Utils.dart';
@@ -1016,26 +1015,11 @@ class MyAppState extends State<MyApp> {
                     flex: 2,
                     child: Container( // Game data (publisher, retailer, etc.)
                       margin: const EdgeInsets.all(10),
-                      child: const Column(
+                      child: Column(
                         children: [
-                          Text(
-                            "Publisher: Add getPublisher(game) function call",
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            "Developper: Add getCreator(game) function call",
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            "Developper: Add getCreator(game) function call",
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
+                          game.media.getPublishersWidget(),
+                          game.media.getCreatorsWidget(),
+                          game.media.getPlatformsWidget(),
                         ],
                       ),
                     ),

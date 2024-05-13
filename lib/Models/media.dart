@@ -1,7 +1,15 @@
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'package:flutter/material.dart';
+
+import 'creator.dart';
 import 'game.dart';
+import 'media_creator.dart';
+import 'media_platform.dart';
+import 'media_publisher.dart';
+import 'platform.dart';
+import 'publisher.dart';
 
 // Don't change the number below (typeId).
 // For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
@@ -64,6 +72,108 @@ class Media extends HiveObject {
       }
     }
     return _media!;
+  }
+
+  List<Publisher> get publishers {
+    List<Publisher> ans = List.empty();
+    
+    for(var mp in Hive.box<MediaPublisher>('media-publishers').values) {
+      if(mp.mediaId == id) {
+        ans.add(mp.publisher);
+      }
+    }
+
+    return ans;
+  }
+
+  Widget getPublishersWidget() {
+    var pubs = publishers;
+
+    return Column(
+      children: [
+        Text(
+          'Publisher${pubs.length <= 1 ? "" : "s"}',
+          style: const TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        for(var pub in pubs)
+          Text(
+            pub.name,
+            style: const TextStyle(
+              color: Colors.white,
+            ),
+          ),
+      ],
+    );
+  }
+
+  List<Creator> get creators {
+    List<Creator> ans = List.empty();
+    
+    for(var mc in Hive.box<MediaCreator>('media-creators').values) {
+      if(mc.mediaId == id) {
+        ans.add(mc.creator);
+      }
+    }
+
+    return ans;
+  }
+
+  Widget getCreatorsWidget() {
+    var crts = creators;
+
+    return Column(
+      children: [
+        Text(
+          'Creator${crts.length <= 1 ? "" : "s"}',
+          style: const TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        for(var crt in crts)
+          Text(
+            crt.name,
+            style: const TextStyle(
+              color: Colors.white,
+            ),
+          ),
+      ],
+    );
+  }
+
+  List<Platform> get platforms {
+    List<Platform> ans = List.empty();
+    
+    for(var mp in Hive.box<MediaPlatform>('media-platforms').values) {
+      if(mp.mediaId == id) {
+        ans.add(mp.platform);
+      }
+    }
+
+    return ans;
+  }
+
+  Widget getPlatformsWidget() {
+    var plts = platforms;
+
+    return Column(
+      children: [
+        Text(
+          'Platform${plts.length <= 1 ? "" : "s"}',
+          style: const TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        for(var plt in plts)
+          Text(
+            plt.name,
+            style: const TextStyle(
+              color: Colors.white,
+            ),
+          ),
+      ],
+    );
   }
 }
 
