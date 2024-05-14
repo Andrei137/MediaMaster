@@ -49,7 +49,7 @@ class MyApp extends StatefulWidget {
   MyAppState createState() => MyAppState();
 }
 
-class MyAppState extends State<MyApp> {  
+class MyAppState extends State<MyApp> {
   int selectedGameIndex = 0;
   String filterQuery = "";
   TextEditingController searchController = TextEditingController();
@@ -1065,6 +1065,35 @@ class MyAppState extends State<MyApp> {
     // TODO: This function gets invoked by the game settings button. Until implemented, that button will do nothing
   }
 
+  Widget renderStickyNote(Note? note) {
+    Widget textToDisplay = const Text(
+      "+",
+      style: TextStyle(
+        fontSize: 70,
+        color: Colors.black26,
+      ),
+    );
+
+    if(note != null) {
+      textToDisplay = Text(
+        note.content,
+        style: const TextStyle(
+          fontSize: 20,
+          color: Colors.black87,
+        ),
+      );
+    }
+    
+    return Container(
+      color: const Color.fromARGB(255, 216, 216, 151),
+      alignment: Alignment.center,
+      margin: const EdgeInsets.all(20),
+      child: SingleChildScrollView(
+        child: textToDisplay,
+      ),
+    );
+  }
+
   Widget renderNotes(Set<Note> notes) {
     // TODO: Remove this once we have a way to add/remove Notes dinamically
     notes.add(
@@ -1074,15 +1103,15 @@ class MyAppState extends State<MyApp> {
         content: "Sticky 1",
       ),
     );
-    return Column(
+
+    return GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      primary: false,
       children: [
         for(Note note in notes)
-          Text(
-            note.content,
-            style: const TextStyle(
-              color: Colors.white,
-            ),
-          ),
+          renderStickyNote(note),
+        renderStickyNote(null),
       ],
     );
   }
