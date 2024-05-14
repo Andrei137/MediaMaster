@@ -37,8 +37,8 @@ class HowLongToBeat implements Service {
           final label = text.split(RegExp(r'\d'))[0].trim();
           final time = text.substring(label.length).trim();
 
-          if (!label.contains('-') && !label.isEmpty && !time.isEmpty) {
-            times[label] = time;
+          if (!time.contains('-') && !label.isEmpty && !time.isEmpty) {
+            times[label] = time.replaceAll('½', '.5');
           }
         }
       }

@@ -309,10 +309,21 @@ class IGDB implements Service {
     }
   }
 
+  bool _containsAllWords(String name, String gameName) {
+    final words = gameName.split(' ');
+    for (var word in words) {
+      if (!name.toLowerCase().contains(word.toLowerCase())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   List<dynamic> _filterGames(games) {
     final badWords = ["bundle", "pack"];
     return games.where((game) => !badWords.any((word) => game['name'].toLowerCase().contains(word))).toList();
   }
+
 
   Future<List<dynamic>> _getAdditionalGames(accessToken, games) async {
     try {
@@ -358,8 +369,9 @@ class IGDB implements Service {
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         var games = jsonDecode(response.body);
-        games = _filterGames(games);
+        games = _filterGames(games).where((game) => _containsAllWords(game['name'], gameName)).toList();
         var additionalGames = await _getAdditionalGames(_accessToken, games);
+        additionalGames = _filterGames(additionalGames).where((game) => _containsAllWords(game['name'], gameName)).toList();
         games.addAll(additionalGames);
         for (int i = 0; i < games.length; ++i) {
           games[i]['name'] = utf8.decode(games[i]['name'].runes.toList());
