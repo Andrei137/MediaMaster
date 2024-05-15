@@ -28,8 +28,7 @@ void main() {
     test('getOptions for invalid game', () async {
       final options = await ServiceHandler.getOptions('reddit');
 
-      expect(options, hasLength(1));
-      expect(options[0]['error'], isNotEmpty);
+      expect(options, isEmpty);
     });
 
     test('getInfo for a game', () async {
