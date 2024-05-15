@@ -40,11 +40,11 @@ class TmdbSeries implements Service {
         return seasonsInfo;
       } 
       else {
-        return {'error': 'Error fetching the number of episodes per season.'};
+        return {};
       }
     }
     catch (e) {
-      return {'error': e};
+      return {};
     }
   }
   
@@ -86,11 +86,11 @@ class TmdbSeries implements Service {
         return options;
       }
       else {
-        return [{'error': 'Error fetching TV series.'}];
+        return [];
       }
     }
     catch (e) {
-      return [{'error': e}];
+      return [];
     }
   }
 
@@ -104,7 +104,7 @@ class TmdbSeries implements Service {
   Future<Map<String, dynamic>> getInfo(Map<String, dynamic> series) async {
     final seasonsInfo = await instance._getEpisodesPerSeason(series['id']);
 
-    if (!seasonsInfo.containsKey('error')) {
+    if (!seasonsInfo.isEmpty) {
       series['seasons'] = seasonsInfo;
     }
     return series;

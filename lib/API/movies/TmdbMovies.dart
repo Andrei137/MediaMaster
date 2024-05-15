@@ -60,11 +60,11 @@ class TmdbMovies implements Service {
         return options;
       }
       else {
-        return [{'error': 'Response code ${response.statusCode}'}];
+        return [];
       }
     }
     catch (e) {
-      return [{'error': e}];
+      return [];
     }
   }
 

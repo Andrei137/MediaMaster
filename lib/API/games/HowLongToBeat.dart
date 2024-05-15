@@ -6,12 +6,18 @@ import '../general/Service.dart';
 
 class HowLongToBeat implements Service {
   // Members
+
+  // classes for HLTB game time elements
+  // example: <li class="GameStats_short__tSJ6I time_70"><h4>Co-Op</h4><h5>1448 Hours</h5></li>
   final _querySelectors = [
     '.GameStats_short__tSJ6I',
     '.GameStats_long__h3afN',
     '.GameStats_full__jz7k7'
   ];
-  final _badLinks = ['reviews', 'lists', 'completions'];
+
+  // HLTB links to ignore
+  // example: https://howlongtobeat.com/game/5203/reviews/latest/1
+  final _badLinks = ['forum', 'reviews', 'lists', 'completions'];
 
   // Private constructor
   HowLongToBeat._();
@@ -37,15 +43,17 @@ class HowLongToBeat implements Service {
           final label = text.split(RegExp(r'\d'))[0].trim();
           final time = text.substring(label.length).trim();
 
-          if (!time.contains('-') && !label.isEmpty && !time.isEmpty) {
-            times[label] = time.replaceAll('½', '.5');
+          if (time.contains('-') || label.isEmpty || time.isEmpty) {
+            continue;
           }
+
+          times[label] = time.replaceAll('½', '.5');
         }
       }
       return times;
     }
     catch (e) {
-      return {'error': e};
+      return {};
     }
   }
 
@@ -78,11 +86,11 @@ class HowLongToBeat implements Service {
         return linkSet.toList();
       } 
       else {
-        return ['Response code ${response.statusCode}'];
+        return [];
       }
     }
     catch (e) {
-      return ['Error: $e'];
+      return [];
     }
   }
 
@@ -107,7 +115,7 @@ class HowLongToBeat implements Service {
       return options;
     }
     catch (e) {
-      return [{'error': '$e'}];
+      return [];
     }
   }
 
@@ -120,11 +128,11 @@ class HowLongToBeat implements Service {
         return await _gameTimes(parse(response.body));
       } 
       else {
-        return {'error': 'Response code ${response.statusCode}'};
+        return {};
       }
     }
     catch (e) {
-      return {'error': e};
+      return {};
     }
   }
 

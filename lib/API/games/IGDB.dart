@@ -50,36 +50,30 @@ class IGDB implements Service {
         return jsonDecode(response.body)["access_token"];
       } 
       else {
-        print("Failed to get access token.");
-        return "Fail";
+        return "";
       }
     }
     catch (e) {
-      print(e);
-      return "Fail";
+      return "";
     }
   }
 
-  String _formatIds(game, key) {
-    var ids = "(";
+  String _formatIds(Map<String, dynamic> game, String key) {
+    var ids = [];
     for (int i = 0; i < game[key].length; ++i) {
-      ids += "${game[key][i]}";
-      if (i != game[key].length - 1) {
-        ids += ", ";
-      }
+      ids.add("${game[key][i]}");
     }
-    ids += ")";
-    return ids;
+    return "(" + ids.join(", ") + ")";
   }
 
-  Future<void> _getArtworks(accessToken, game) async {
+  Future<void> _getArtworks(String accessToken, Map<String, dynamic> game) async {
     try {
       final url = Uri.parse("https://api.igdb.com/v4/artworks");
       final headers = {
         "Client-ID": clientIdIGDB,
         "Authorization": "Bearer $accessToken",
       };
-      final body = "fields url; where game = ${game['id']};";
+      final body = "fields url; where id = ${_formatIds(game, 'artworks')};";
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         var artworks = jsonDecode(response.body);
@@ -87,16 +81,11 @@ class IGDB implements Service {
           _artwork.add(artworks[i]['url'].replaceFirst("thumb", "original"));
         }
       } 
-      else {
-        print("Failed to get artworks.");
-      }
     }
-    catch (e) {
-      print(e);
-    }
+    catch (e) {}
   }
 
-  Future<void> _getCover(accessToken, game) async {
+  Future<void> _getCover(String accessToken, Map<String, dynamic> game) async {
     try {
       final url = Uri.parse("https://api.igdb.com/v4/covers");
       final headers = {
@@ -110,16 +99,11 @@ class IGDB implements Service {
         _cover = cover[0]['url'];
         _cover = _cover.replaceFirst("thumb", "original");
       } 
-      else {
-        print("Failed to get cover.");
-      }
     }
-    catch (e) {
-      print(e);
-    }
+    catch (e) {}
   }
 
-  Future<void> _getCollections(accessToken, game) async {
+  Future<void> _getCollections(String accessToken, Map<String, dynamic> game) async {
     try {
       if (game['collection'] != null) {
         game['collections'].add(game['collection']);
@@ -138,35 +122,22 @@ class IGDB implements Service {
           _collections.add(utf8.decode(collections[i]['name'].runes.toList()));
         }
       } 
-      else {
-        print("Failed to get collections.");
-      }
     }
-    catch (e) {
-      print(e);
-    }
+    catch (e) {}
   }
 
-  Future<void> _getCompanies(accessToken, game) async {
+  Future<void> _getCompanies(String accessToken, Map<String, dynamic> game) async {
     try {
       await _getDevelopersAndPublishers(accessToken, game);
-      String ids = '(';
+      var ids_array = [];
       for (int i = 0; i < _developers.length; ++i) {
-        ids += "${_developers[i]}";
-        if (i != _developers.length - 1) {
-          ids += ", ";
-        }
-      }
-      if (_developers.isNotEmpty && _publishers.isNotEmpty) {
-        ids += ", ";
+        ids_array.add("${_developers[i]}");
       }
       for (int i = 0; i < _publishers.length; ++i) {
-        ids += "${_publishers[i]}";
-        if (i != _publishers.length - 1) {
-          ids += ", ";
-        }
+        ids_array.add("${_publishers[i]}");
       }
-      ids += ')';
+      var ids = "(" + ids_array.join(", ") + ")";
+
       final url = Uri.parse("https://api.igdb.com/v4/companies");
       final headers = {
         "Client-ID": clientIdIGDB,
@@ -195,16 +166,11 @@ class IGDB implements Service {
           }
         }
       } 
-      else {
-        print("Failed to get companies.");
-      }
     }
-    catch (e) {
-      print(e);
-    }
+    catch (e) {}
   }
 
-  Future<void> _getDevelopersAndPublishers(accessToken, game) async {
+  Future<void> _getDevelopersAndPublishers(String accessToken, Map<String, dynamic> game) async {
     try {
       final url = Uri.parse("https://api.igdb.com/v4/involved_companies");
       final headers = {
@@ -224,16 +190,11 @@ class IGDB implements Service {
           }
         }
       }
-      else {
-        print("Failed to get developers and publishers.");
-      }
     }
-    catch (e) {
-      print(e);
-    }
+    catch (e) {}
   }
 
-  Future<void> _getFranchises(accessToken, game) async {
+  Future<void> _getFranchises(String accessToken, Map<String, dynamic> game) async {
     try {
       if (game['franchise'] != null) {
         game['franchises'].add(game['franchise']);
@@ -252,16 +213,11 @@ class IGDB implements Service {
           _franchises.add(utf8.decode(franchises[i]['name'].runes.toList()));
         }
       } 
-      else {
-        print("Failed to get franchises.");
-      }
     }
-    catch (e) {
-      print(e);
-    }
+    catch (e) {}
   }
 
-  Future<void> _getGenres(accessToken, game) async {
+  Future<void> _getGenres(String accessToken, Map<String, dynamic> game) async {
     try {
       final url = Uri.parse("https://api.igdb.com/v4/genres");
       final headers = {
@@ -276,16 +232,11 @@ class IGDB implements Service {
           _genres.add(utf8.decode(genres[i]['name'].runes.toList()));
         }
       } 
-      else {
-        print("Failed to get genress.");
-      }
     }
-    catch (e) {
-      print(e);
-    }
+    catch (e) {}
   }
 
-  Future<void> _getWebsites(accessToken, game) async {
+  Future<void> _getWebsites(String accessToken, Map<String, dynamic> game) async {
     try {
       final url = Uri.parse("https://api.igdb.com/v4/websites");
       final headers = {
@@ -300,13 +251,8 @@ class IGDB implements Service {
           _websites.add(websites[i]['url']);
         }
       } 
-      else {
-        print("Failed to get websites.");
-      }
     }
-    catch (e) {
-      print(e);
-    }
+    catch (e) {}
   }
 
   bool _containsAllWords(String name, String gameName) {
@@ -344,12 +290,12 @@ class IGDB implements Service {
           return _filterGames(dlcsRemakesRemasters);
         } 
         else {
-          return [{'error': 'Response code ${response.statusCode}'}];
+          return [];
         }
       });
     }
     catch (e) {
-      return [{'error': '$e'}];
+      return [];
     }
   }
 
@@ -386,18 +332,17 @@ class IGDB implements Service {
             games[i]['first_release_date'] = games[i]['first_release_date'].toString().substring(0, 10);
           }
           if (games[i]['summary'] != null) {
-            games[i]['summary'] =
-                utf8.decode(games[i]['summary'].runes.toList());
+            games[i]['summary'] = utf8.decode(games[i]['summary'].runes.toList());
           }
         }
         return List<Map<String, dynamic>>.from(games);
       } 
       else {
-        return [{'error': 'Response code ${response.statusCode}'}];
+        return [];
       }
     }
     catch (e) {
-      return [{'error': '$e'}];
+      return [];
     }
   }
 

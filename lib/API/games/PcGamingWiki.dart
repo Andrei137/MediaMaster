@@ -21,6 +21,9 @@ class PcGamingWiki implements Service {
   // Private methods
   Future<List<Map<String, dynamic>>> _getGames(String gameName) async {
     try {
+      // some games can't be found when the name contains -
+      gameName = gameName.replaceAll('-', ' ');
+
       final url ='https://www.pcgamingwiki.com/w/api.php?action=query&format=json&list=search&srsearch=$gameName';
       final response = await http.get(Uri.parse(url));
 
@@ -42,15 +45,15 @@ class PcGamingWiki implements Service {
           return options;
         }
         else {
-          return [{'error': 'No results found.'}];
+          return [];
         }
       }
       else {
-        return [{'error': 'Response code ${response.statusCode}'}];
+        return [];
       }
     }
     catch (e) {
-      return [{'error': '$e'}];
+      return [];
     }
   }
 
@@ -66,11 +69,11 @@ class PcGamingWiki implements Service {
         };
 
         for (var query in _queries) {
-          final sysreqsTable = document.querySelector('.pcgwikitable#table-sysreqs-$query');
+          final sysReqsTable = document.querySelector('.pcgwikitable#table-sysreqs-$query');
 
-          Map<String, dynamic> sysreqs = {};
-          if (sysreqsTable != null) {
-            List<Element> rows = sysreqsTable.querySelectorAll('.template-infotable-body, .table-sysreqs-body-row');
+          Map<String, dynamic> sysReqs = {};
+          if (sysReqsTable != null) {
+            List<Element> rows = sysReqsTable.querySelectorAll('.template-infotable-body, .table-sysreqs-body-row');
 
             for (var row in rows) {
               final fullCategory = row.querySelector('.table-sysreqs-body-parameter')?.text.trim() ?? '';
@@ -79,30 +82,29 @@ class PcGamingWiki implements Service {
               final minimumReq = row.querySelector('.table-sysreqs-body-minimum')?.text.trim() ?? '';
               final recommendedReq = row.querySelector('.table-sysreqs-body-recommended')?.text.trim() ?? '';
 
-              if (minimumReq.isNotEmpty || recommendedReq.isNotEmpty)
-              {
-                sysreqs[category] = {
+              if (minimumReq.isNotEmpty || recommendedReq.isNotEmpty) {
+                sysReqs[category] = {
                   'minimum': (minimumReq != '') ? minimumReq : null,
                   'recommended': (recommendedReq != '') ? recommendedReq : null
                 };
               }
             }
-            gameInfo[query] = sysreqs;
+            gameInfo[query] = sysReqs;
           }
         }
         if (gameInfo.isNotEmpty) {
           return gameInfo;
         }
         else {
-          return {'error': 'No game data found'};
+          return {};
         }
       }
       else {
-        return {'error': 'Failed to get game data'};
+        return {};
       }
     }
     catch (e) {
-      return {'error': e};
+      return {};
     }
   }
 
