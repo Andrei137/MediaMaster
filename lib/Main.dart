@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'utils.dart';
+import 'package:pair/pair.dart';
 
 void main() async {
   await Hive.initFlutter();
@@ -75,23 +77,30 @@ class MyAppState extends State<MyApp> {
   ListView mediaListBuilder(BuildContext context, Box<Game> box, Widget? _)
   {
     List<ListTile> listTiles = List.from([]);
-    setSearchText();
+    List<Pair<Game, int> > gamesIndices = List.from([]);
 
     for(int i = 0;i < box.length;++i) {
-      final game = box.getAt(i)!;
-      if(game.name.toLowerCase().contains(filterQuery)) {
+      gamesIndices.add(Pair(box.getAt(i)!, i));
+    }
+
+    gamesIndices.sort((p0, p1) => p0.key.name.compareTo(p1.key.name));
+
+    for(int i = 0;i < gamesIndices.length;++i) {
+      final game = gamesIndices[i].key;
+      final idx = gamesIndices[i].value;
+      if(filterQuery == "" || game.name.toLowerCase().contains(filterQuery)) {
         listTiles.add(
           ListTile(
             title: Text(game.name),
             onTap: () {
               setState(() {
-                selectedGameIndex = i;
+                selectedGameIndex = idx;
               });
             },
             trailing: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () {
-                _showDeleteConfirmationDialog(context, i);
+                _showDeleteConfirmationDialog(context, idx);
               },
             ),
           ),
@@ -112,23 +121,40 @@ class MyAppState extends State<MyApp> {
     filterQuery = '';
   }
 
+  bool gameAlreadyInLibrary(String gameName) {
+    for(Game game in gameBox.values) {
+      if(game.name == gameName) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    setSearchText();
+
+    IconButton? butonReset = IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  clearSearchFilter();
+                                  searchController.clear();
+                                });
+                              },
+                              icon: const Icon(Icons.clear),
+                            );
+    if(filterQuery == "") {
+      butonReset = null;
+    }
+
     TextField textField = TextField(
       controller: searchController,
       onChanged: (value) {setState(() {});},
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
         hintText: "Search game in library",
-        suffixIcon: IconButton(
-          onPressed: () {
-            setState(() {
-              clearSearchFilter();
-              searchController.clear();
-            });
-          },
-          icon: const Icon(Icons.clear),
-        ),
+        suffixIcon: butonReset,
       ),
     );
     
@@ -204,7 +230,7 @@ class MyAppState extends State<MyApp> {
             return AlertDialog(
               title: const Text('Search for a Game'),
               content: SizedBox(
-                height: noSearch ? 100 : 150, // Set height based on the presence of search results
+                height: noSearch ? 100 : 400, // Set height based on the presence of search results
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -234,13 +260,31 @@ class MyAppState extends State<MyApp> {
                               const SizedBox(height: 2),
                               ...searchResults.map((result) {
                                 String gameName = result['title'];
-                                return ListTile(
-                                  title: Text(gameName),
-                                  onTap: () {
-                                    _addGame(gameName);
-                                    Navigator.of(context).pop();
-                                  },
-                                );
+
+                                if(gameAlreadyInLibrary(gameName)) {
+                                    return ListTile(
+                                    title: Text(gameName),
+                                    subtitle: const Text(
+                                      "Game is already in library",
+                                      style: TextStyle(
+                                        color: Color.fromARGB(255, 255, 0, 0),
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      _addGame(gameName);
+                                      Navigator.of(context).pop();
+                                    },
+                                  );
+                                }
+                                else {
+                                  return ListTile(
+                                    title: Text(gameName),
+                                    onTap: () {
+                                      _addGame(gameName);
+                                      Navigator.of(context).pop();
+                                    },
+                                  );
+                                }
                               }),
                             ],
                           ),
@@ -277,6 +321,13 @@ class MyAppState extends State<MyApp> {
   }
 
   Future<void> _addGame(String gameName) async {
+    for(int i = 0;i < gameBox.length;++i) {
+      Game game = gameBox.getAt(i)!;
+      if(game.name == gameName) {
+        return;
+      }
+    }
+
     Game newGame = Game(
       id: DateTime.now().millisecondsSinceEpoch,
       name: gameName,
