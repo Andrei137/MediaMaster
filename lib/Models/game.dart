@@ -1,4 +1,6 @@
 import 'package:hive/hive.dart';
+import 'package:flutter/material.dart';
+
 import 'media.dart';
 
 // Don't change the number below (typeId).
@@ -119,6 +121,92 @@ class Game extends HiveObject {
     }
 
     return minTime;
+  }
+
+  Widget renderHLTB() {
+    String formatTime(int timeInSeconds, {bool days = false, bool seconds = false}) {
+      if(timeInSeconds < 0) {
+        return "Value missing. Contact an admin";
+      }
+
+      String daysStr = "";
+      if(days && timeInSeconds >= 60 * 60 * 24) {
+        daysStr = "${timeInSeconds ~/ (60 * 60 * 24)} day${timeInSeconds ~/ (60 * 60 * 24) > 1 ? 's' : ''}, ";
+        timeInSeconds %= 60 * 60 * 24;
+      }
+
+      String hoursStr = "${timeInSeconds ~/ (60 * 60)} hour${timeInSeconds ~/ (60 * 60) > 1 ? 's' : ''}, ";
+      timeInSeconds %= 60 * 60;
+
+      String minutesStr = "${timeInSeconds ~/ 60} minute${timeInSeconds ~/ 60 > 1 ? 's' : ''}";
+      timeInSeconds %= 60;
+
+      String secondsStr = "";
+      if(seconds && timeInSeconds != 0) {
+        secondsStr = ", $timeInSeconds";
+      }
+
+      return "$daysStr$hoursStr$minutesStr$secondsStr";
+    }
+
+    Widget formatHLTBRow(String title, int timeInSeconds) {
+      return Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              title,
+              textAlign: TextAlign.right,
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              formatTime(timeInSeconds),
+              textAlign: TextAlign.left,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        formatHLTBRow(
+          "Main: ",
+          HLTBMainInSeconds,
+        ),
+        formatHLTBRow(
+          "Main + Side: ",
+          HLTBMainSideInSeconds,
+        ),
+        formatHLTBRow(
+          "Completionist: ",
+          HLTBCompletionistInSeconds,
+        ),
+        formatHLTBRow(
+          "All styles: ",
+          HLTBAllStylesInSeconds,
+        ),
+        formatHLTBRow(
+          "Solo: ",
+          HLTBSoloInSeconds,
+        ),
+        formatHLTBRow(
+          "Coop: ",
+          HLTBCoopInSeconds,
+        ),
+        formatHLTBRow(
+          "Versus",
+          HLTBVersusInSeconds,
+        ),
+        formatHLTBRow(
+          "Singleplayer",
+          HLTBSingleplayerInSeconds,
+        ),
+      ],
+    );
   }
 }
 

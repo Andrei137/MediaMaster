@@ -426,6 +426,7 @@ class MyAppState extends State<MyApp> {
                                       ),
                                     ),
                                     onTap: () {
+                                      // getInfo(gameIndex)
                                       _addGame(gameName);
                                       Navigator.of(context).pop();
                                     },
@@ -832,7 +833,7 @@ class MyAppState extends State<MyApp> {
         HDDRecommended: "Recommended HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
         GPUMinimum: "Minimum GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
         GPURecommended: "Recommended GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        HLTBMainInSeconds: -1 /*Add parameter/call to HLTB service API*/,
+        HLTBMainInSeconds: 3720/*For testing purposes*/ /*Add parameter/call to HLTB service API*/,
         HLTBMainSideInSeconds: -1 /*Add parameter/call to HLTB service API*/,
         HLTBCompletionistInSeconds: -1 /*Add parameter/call to HLTB service API*/,
         HLTBAllStylesInSeconds: -1 /*Add parameter/call to HLTB service API*/,
@@ -1053,8 +1054,16 @@ class MyAppState extends State<MyApp> {
     // TODO: This function gets invoked by the play button. For now, until we integrate Steam/Epic/GOG/whatever this will be empty and the play button will do nothing
   }
   
-  void _showHLTBDialog(Game game) {
-    // TODO: Implement this
+  Future<void> _showHLTBDialog(Game game) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('How long to beat'),
+          content: game.renderHLTB(),
+        );
+      },
+    );
   }
   
   void runSysCheck(Game game) {
