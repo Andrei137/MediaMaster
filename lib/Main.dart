@@ -1074,7 +1074,52 @@ class MyAppState extends State<MyApp> {
     // TODO: This function gets invoked by the game settings button. Until implemented, that button will do nothing
   }
 
-  Widget renderStickyNote(Note? note) {
+  Future<void>_showNewStickyDialog(int mediaId) {
+    TextEditingController controller = TextEditingController();
+
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("New sticky note"),
+          content: SizedBox(
+            width: 350,
+            child: TextFormField(
+              controller: controller,
+              autocorrect: false,
+              minLines: 10,
+              maxLines: 10,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {});
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Note note = Note(
+                  mediaId: mediaId,
+                  userId: UserSystem().currentUser!.id,
+                  content: controller.text,
+                );
+                Hive.box<Note>('notes').add(note);
+                UserSystem().currentUserNotes.add(note);
+                Navigator.of(context).pop();
+                setState(() {});
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget renderStickyNote(Note? note, int mediaId) {
     Widget textToDisplay = const Text(
       "+",
       style: TextStyle(
@@ -1082,8 +1127,10 @@ class MyAppState extends State<MyApp> {
         color: Colors.black26,
       ),
     );
+    var onClick = () {_showNewStickyDialog(mediaId);};
 
     if(note != null) {
+      onClick = () {};
       textToDisplay = Text(
         note.content,
         style: const TextStyle(
@@ -1093,34 +1140,50 @@ class MyAppState extends State<MyApp> {
       );
     }
     
-    return Container(
-      color: const Color.fromARGB(255, 216, 216, 151),
-      alignment: Alignment.center,
-      margin: const EdgeInsets.all(20),
-      child: SingleChildScrollView(
-        child: textToDisplay,
-      ),
+    void removeNote() {
+      note as Note;
+      Hive.box<Note>('notes').delete(note);
+      UserSystem().currentUserNotes.remove(note);
+      setState(() {});
+    }
+
+    return GestureDetector(
+      onTap: onClick,
+      child: Stack(
+        children: [
+          Container(
+            color: const Color.fromARGB(255, 216, 216, 151),
+            alignment: Alignment.center,
+            margin: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: textToDisplay,
+            ),
+          ),
+          if(note != null)
+            Positioned(
+              right: 20,
+              top: 20,
+              child: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: removeNote,
+                color: const Color.fromARGB(255, 192, 0, 0),
+              ),
+            ),
+        ],
+      )
     );
   }
 
   Widget renderNotes(Set<Note> notes) {
-    // TODO: Remove this once we have a way to add/remove Notes dinamically
-    notes.add(
-      Note(
-        mediaId: UserSystem().getUserGames()[selectedGameIndex].mediaId,
-        userId: UserSystem().currentUser!.id,
-        content: "Sticky 1",
-      ),
-    );
-
     return GridView.count(
       crossAxisCount: 3,
       shrinkWrap: true,
       primary: false,
       children: [
         for(Note note in notes)
-          renderStickyNote(note),
-        renderStickyNote(null),
+          renderStickyNote(note, -1),
+        renderStickyNote(null, UserSystem().getUserGames()[selectedGameIndex].mediaId),
       ],
     );
   }
