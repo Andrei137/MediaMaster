@@ -658,52 +658,6 @@ class MyAppState extends State<MyApp> {
                       Row(
                         children: [
                           const Text(
-                            'Genres',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => setState(() {
-                              selectedGenresIndices.clear();
-                              resetState();
-                            }),
-                            icon: const Icon(
-                              Icons.clear,
-                            ),
-                          ),
-                        ],
-                      ),
-                      for(int i = 0;i < genres.length;++i)
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: selectedGenresIndices.contains(i),
-                              onChanged: (value) {
-                                setState(() {
-                                  if(value == true) {
-                                    selectedGenresIndices.add(i);
-                                  }
-                                  else {
-                                    selectedGenresIndices.remove(i);
-                                  }
-                                  resetState();
-                                });
-                              },
-                            ),
-                            Text(
-                              genres.getAt(i)!.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      Row(
-                        children: [
-                          const Text(
                             'Tags',
                             style: TextStyle(
                               fontSize: 18,
@@ -747,6 +701,52 @@ class MyAppState extends State<MyApp> {
                             ),
                           ],
                         ),
+                      Row(
+                        children: [
+                          const Text(
+                            'Genres',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => setState(() {
+                              selectedGenresIndices.clear();
+                              resetState();
+                            }),
+                            icon: const Icon(
+                              Icons.clear,
+                            ),
+                          ),
+                        ],
+                      ),
+                      for(int i = 0;i < genres.length;++i)
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: selectedGenresIndices.contains(i),
+                              onChanged: (value) {
+                                setState(() {
+                                  if(value == true) {
+                                    selectedGenresIndices.add(i);
+                                  }
+                                  else {
+                                    selectedGenresIndices.remove(i);
+                                  }
+                                  resetState();
+                                });
+                              },
+                            ),
+                            Text(
+                              genres.getAt(i)!.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                     ], // -------------------------------------------------------------------
                   ),
                 ),
@@ -783,12 +783,14 @@ class MyAppState extends State<MyApp> {
             TextButton(
               onPressed: () {
                 Game gameToDelete = UserSystem().getUserGames()[index];
+                int i = 0;
                 for(MediaUser mu in UserSystem().currentUserMedia) {
                   if(mu.media == gameToDelete.media) {
                     UserSystem().currentUserMedia.remove(mu);
-                    Hive.box<MediaUser>('media-users').delete(mu);
+                    Hive.box<MediaUser>('media-users').delete(mu.key);
                     break;
                   }
+                  ++i;
                 }
                 setState(() {
                   selectedGameIndex = 0; // Move to the first game
@@ -811,7 +813,6 @@ class MyAppState extends State<MyApp> {
     Game? nullableGame = gameAlreadyInDB(gameName);
 
     if(nullableGame == null) {
-      print("newForDB");
       Media media = Media(
         originalName: gameName,
         description: "Add parameter/call to API for description here.",
@@ -850,7 +851,6 @@ class MyAppState extends State<MyApp> {
     Game game = nullableGame;
 
     if(!gameAlreadyInLibrary(game.media.originalName)) {
-      print("newForMe");
       MediaUser mu = MediaUser(
         mediaId: game.mediaId,
         userId: UserSystem().currentUser!.id,
@@ -1070,8 +1070,140 @@ class MyAppState extends State<MyApp> {
     // TODO: This function gets invoked by the system check button. For now, until we integrate some way of checking the system capabilities it will do nothing
   }
   
-  void _showGameSettingsDialog(Game game) {
-    // TODO: This function gets invoked by the game settings button. Until implemented, that button will do nothing
+  Future<void> _showGameSettingsDialog(Game game) {
+    void resetState() {setState(() {});}
+
+    var userTags = Set.from(UserSystem().currentUserTags.where((mut) {
+      return mut.mediaId == game.mediaId;
+    }).map((mut) => mut.tagId));
+    var userGenres = Set.from(UserSystem().currentUserGenres.where((mug) {
+      return mug.mediaId == game.mediaId;
+    }).map((mug) => mug.genreId));
+    game.mediaId;
+
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Game settings'),
+              content: SizedBox(
+                height: 400,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Game tags',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      for(int i = 0;i < tags.length;++i)
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: userTags.contains(tags.getAt(i)!.id),
+                              onChanged: (value) {
+                                setState(() {
+                                  int id = tags.getAt(i)!.id;
+                                  MediaUserTag mut = MediaUserTag(
+                                    mediaId: game.mediaId,
+                                    userId: UserSystem().currentUser!.id,
+                                    tagId: id,
+                                  );
+                                  var box = Hive.box<MediaUserTag>('media-user-tags');
+
+                                  if(value == true) {
+                                    userTags.add(id);
+                                    UserSystem().currentUserTags.add(mut);
+                                    Hive.box<MediaUserTag>('media-user-tags').add(mut);
+                                  }
+                                  else {
+                                    userTags.remove(id);
+                                    UserSystem().currentUserTags.remove(mut);
+                                    var vals = box.values;
+                                    for(i = 0;i < vals.length;++i) {
+                                      if(vals.elementAt(i) == mut) {
+                                        box.delete(vals.elementAt(i).key);
+                                        break;
+                                      }
+                                    }
+                                  }
+                                  resetState();
+                                });
+                              },
+                            ),
+                            Text(
+                              tags.getAt(i)!.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      const Text(
+                        'Game genres',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      for(int i = 0;i < genres.length;++i)
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: userGenres.contains(i),
+                              onChanged: (value) {
+                                setState(() {
+                                  int id = genres.getAt(i)!.id;
+                                  MediaUserGenre mug = MediaUserGenre(
+                                    mediaId: game.mediaId,
+                                    userId: UserSystem().currentUser!.id,
+                                    genreId: id,
+                                  );
+                                  var box = Hive.box<MediaUserGenre>('media-user-genres');
+
+                                  if(value == true) {
+                                    userGenres.add(id);
+                                    UserSystem().currentUserGenres.add(mug);
+                                    Hive.box<MediaUserGenre>('media-user-genres').add(mug);
+                                  }
+                                  else {
+                                    userGenres.remove(id);
+                                    UserSystem().currentUserGenres.remove(mug);
+                                    var vals = box.values;
+                                    for(i = 0;i < vals.length;++i) {
+                                      if(vals.elementAt(i) == mug) {
+                                        box.delete(vals.elementAt(i).key);
+                                        break;
+                                      }
+                                    }
+                                  }
+                                  resetState();
+                                });
+                              },
+                            ),
+                            Text(
+                              genres.getAt(i)!.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ], // -------------------------------------------------------------------
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      }
+    );
   }
 
   Future<void>_showNewStickyDialog(int mediaId) {
@@ -1100,16 +1232,16 @@ class MyAppState extends State<MyApp> {
               child: const Text("Cancel"),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Note note = Note(
                   mediaId: mediaId,
                   userId: UserSystem().currentUser!.id,
                   content: controller.text,
                 );
-                Hive.box<Note>('notes').add(note);
                 UserSystem().currentUserNotes.add(note);
                 Navigator.of(context).pop();
                 setState(() {});
+                await Hive.box<Note>('notes').add(note);
               },
               child: const Text("Save"),
             ),
@@ -1140,10 +1272,10 @@ class MyAppState extends State<MyApp> {
       );
     }
     
-    void removeNote() {
+    void removeNote() async {
       note as Note;
-      Hive.box<Note>('notes').delete(note);
       UserSystem().currentUserNotes.remove(note);
+      Hive.box<Note>('notes').delete(note.key);
       setState(() {});
     }
 
