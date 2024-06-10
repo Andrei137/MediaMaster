@@ -764,20 +764,6 @@ class MyAppState extends State<MyApp> {
 
   void _showSettingsDialog(BuildContext context) {
     // TODO: Implement this
-  Future<void> _addGame(String gameName) async {
-    for(int i = 0;i < gameBox.length;++i) {
-      Game game = gameBox.getAt(i)!;
-      if(game.name == gameName) {
-        return;
-      }
-    }
-
-    Game newGame = Game(
-      id: DateTime.now().millisecondsSinceEpoch,
-      name: gameName,
-      backgroundImage: placeholderImageUrl,
-    );
-    gameBox.add(newGame);
   }
 
   Future<void> _showDeleteConfirmationDialog(BuildContext context, int index) async {
@@ -797,14 +783,12 @@ class MyAppState extends State<MyApp> {
             TextButton(
               onPressed: () {
                 Game gameToDelete = UserSystem().getUserGames()[index];
-                int i = 0;
                 for(MediaUser mu in UserSystem().currentUserMedia) {
                   if(mu.media == gameToDelete.media) {
                     UserSystem().currentUserMedia.remove(mu);
                     Hive.box<MediaUser>('media-users').delete(mu.key);
                     break;
                   }
-                  ++i;
                 }
 
                 setState(() {
