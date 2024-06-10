@@ -279,7 +279,7 @@ class MyAppState extends State<MyApp> {
         suffixIcon: butonSearchReset,
       ),
     );
-
+      
     return Scaffold(
       appBar: AppBar(
         title: const Text('MediaMaster'),
@@ -764,6 +764,20 @@ class MyAppState extends State<MyApp> {
 
   void _showSettingsDialog(BuildContext context) {
     // TODO: Implement this
+  Future<void> _addGame(String gameName) async {
+    for(int i = 0;i < gameBox.length;++i) {
+      Game game = gameBox.getAt(i)!;
+      if(game.name == gameName) {
+        return;
+      }
+    }
+
+    Game newGame = Game(
+      id: DateTime.now().millisecondsSinceEpoch,
+      name: gameName,
+      backgroundImage: placeholderImageUrl,
+    );
+    gameBox.add(newGame);
   }
 
   Future<void> _showDeleteConfirmationDialog(BuildContext context, int index) async {
@@ -792,6 +806,7 @@ class MyAppState extends State<MyApp> {
                   }
                   ++i;
                 }
+
                 setState(() {
                   selectedGameIndex = 0; // Move to the first game
                 });
@@ -1195,7 +1210,7 @@ class MyAppState extends State<MyApp> {
                             ),
                           ],
                         ),
-                    ], // -------------------------------------------------------------------
+                    ],
                   ),
                 ),
               ),
