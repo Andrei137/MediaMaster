@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:mediamaster/Models/note.dart';
-import 'Utils.dart';
 import 'package:pair/pair.dart';
+import 'Utils.dart';
+import 'Main.dart';
 
 import 'Models/game.dart';
 import 'Models/genre.dart';
@@ -280,8 +281,16 @@ class MyAppState extends State<MyApp> {
             tooltip: 'Settings',
           ),
           Text(
-            'Placeholder username',
+            UserSystem().currentUser!.username,
           ),
+          IconButton(
+              onPressed: () {
+                UserSystem().logout();
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) => Home()));
+              },
+              icon: const Icon(Icons.logout),
+              tooltip: 'Log out')
         ],
       ),
       body: Row(

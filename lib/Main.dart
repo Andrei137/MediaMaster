@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'Models/seed_data.dart';
 import 'Models/database_adapters.dart';
 
 import 'Auth/signup_screen.dart';
+import 'Auth/signup_bloc.dart';
 import 'Auth/login_screen.dart';
-
-import 'App.dart';
+import 'Auth/login_bloc.dart';
 
 import 'Testing/test_db_relationships.dart';
 
@@ -23,7 +23,9 @@ void main() async {
       MaterialApp(
         title: 'MediaMaster',
         theme: ThemeData(
-          primarySwatch: Colors.blue,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Color.fromARGB(219, 10, 94, 87),
+          ),
         ),
         home: const Home(),
       ),
@@ -51,39 +53,33 @@ class HomeState extends State<Home> {
           children: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const MyApp()));
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => BlocProvider(
+                          create: (context) => SignUpBloc(),
+                          child: const SignUpScreen(),
+                        )));
               },
-              child: const Text('Main page'),
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(
-                    Color.fromARGB(219, 10, 94, 87)),
+                    const Color.fromARGB(219, 10, 94, 87)),
                 foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
               ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const SignUpScreen()));
-              },
               child: const Text('Sign Up'),
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(
-                    Color.fromARGB(219, 10, 94, 87)),
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-              ),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const LoginScreen()));
+                    builder: (context) => BlocProvider(
+                          create: (context) => LoginBloc(),
+                          child: const LoginScreen(),
+                        )));
               },
-              child: const Text('Log in'),
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all<Color>(
-                    Color.fromARGB(219, 10, 94, 87)),
+                    const Color.fromARGB(219, 10, 94, 87)),
                 foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
               ),
+              child: const Text('Log in'),
             ),
           ],
         ),
