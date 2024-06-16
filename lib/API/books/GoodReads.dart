@@ -36,31 +36,33 @@ class GoodReads implements Service {
 
           options.add({
             'name': book.querySelector('a.bookTitle')?.text?.trim() ?? null,
-            'link': 'https://www.goodreads.com${book.querySelector('a.bookTitle')?.attributes['href'] ?? ""}',
+            'link':
+                'https://www.goodreads.com${book.querySelector('a.bookTitle')?.attributes['href'] ?? ""}',
             'author': book.querySelector('a.authorName')?.text?.trim() ?? null,
             'rating': ratingText.split('avg rating —')[0].trim(),
           });
         }
         return options;
-      } 
-      else {
+      } else {
         return [];
       }
-    } 
-    catch (e) {
+    } catch (e) {
       return [];
     }
   }
 
   Future<Map<String, dynamic>> _searchBook(Map<String, dynamic> book) async {
     try {
-      final response = await http.get(Uri.parse(book['link']), headers: bookHeaders);
+      final response =
+          await http.get(Uri.parse(book['link']), headers: bookHeaders);
 
       if (response.statusCode == 200) {
         final document = parse(response.body);
-        final scriptTag = document.querySelector('script[type="application/ld+json"]');
+        final scriptTag =
+            document.querySelector('script[type="application/ld+json"]');
         final jsonData = json.decode(scriptTag?.text ?? "{}");
-        final pagesFormat = document.querySelector('p[data-testid="pagesFormat"]');
+        final pagesFormat =
+            document.querySelector('p[data-testid="pagesFormat"]');
 
         return {
           'name': book['name'],
@@ -68,17 +70,22 @@ class GoodReads implements Service {
           'link': book['link'],
           'rating': book['rating'],
           'numPages': pagesFormat?.text?.trim().split(' ')[0] ?? null,
-          'publicationInfo': document.querySelector('p[data-testid="publicationInfo"]')?.text?.trim().split('First published ')?.last ?? null,
-          'description': document.querySelector('span.Formatted')?.text?.trim() ?? null,
+          'publicationInfo': document
+                  .querySelector('p[data-testid="publicationInfo"]')
+                  ?.text
+                  ?.trim()
+                  .split('First published ')
+                  ?.last ??
+              null,
+          'description':
+              document.querySelector('span.Formatted')?.text?.trim() ?? null,
           'bookFormat': jsonData['bookFormat'] ?? null,
           'language': jsonData['inLanguage'] ?? null
         };
-      } 
-      else {
+      } else {
         return {};
       }
-    } 
-    catch (e) {
+    } catch (e) {
       return {};
     }
   }
