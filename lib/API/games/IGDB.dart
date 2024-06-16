@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -49,12 +48,10 @@ class IGDB implements Service {
       final response = await http.post(url, body: _params);
       if (response.statusCode == 200) {
         return jsonDecode(response.body)["access_token"];
-      } 
-      else {
+      } else {
         return "";
       }
-    }
-    catch (e) {
+    } catch (e) {
       return "";
     }
   }
@@ -67,7 +64,8 @@ class IGDB implements Service {
     return "(" + ids.join(", ") + ")";
   }
 
-  Future<void> _getArtworks(String accessToken, Map<String, dynamic> game) async {
+  Future<void> _getArtworks(
+      String accessToken, Map<String, dynamic> game) async {
     try {
       final url = Uri.parse("https://api.igdb.com/v4/artworks");
       final headers = {
@@ -81,9 +79,8 @@ class IGDB implements Service {
         for (int i = 0; i < artworks.length; ++i) {
           _artwork.add(artworks[i]['url'].replaceFirst("thumb", "original"));
         }
-      } 
-    }
-    catch (e) {}
+      }
+    } catch (e) {}
   }
 
   Future<void> _getCover(String accessToken, Map<String, dynamic> game) async {
@@ -99,12 +96,12 @@ class IGDB implements Service {
         var cover = jsonDecode(response.body);
         _cover = cover[0]['url'];
         _cover = _cover.replaceFirst("thumb", "original");
-      } 
-    }
-    catch (e) {}
+      }
+    } catch (e) {}
   }
 
-  Future<void> _getCollections(String accessToken, Map<String, dynamic> game) async {
+  Future<void> _getCollections(
+      String accessToken, Map<String, dynamic> game) async {
     try {
       if (game['collection'] != null) {
         game['collections'].add(game['collection']);
@@ -115,19 +112,20 @@ class IGDB implements Service {
         "Client-ID": clientIdIGDB,
         "Authorization": "Bearer $accessToken",
       };
-      final body = "fields name; where id = ${_formatIds(game, 'collections')};";
+      final body =
+          "fields name; where id = ${_formatIds(game, 'collections')};";
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         var collections = jsonDecode(response.body);
         for (int i = 0; i < collections.length; ++i) {
           _collections.add(utf8.decode(collections[i]['name'].runes.toList()));
         }
-      } 
-    }
-    catch (e) {}
+      }
+    } catch (e) {}
   }
 
-  Future<void> _getCompanies(String accessToken, Map<String, dynamic> game) async {
+  Future<void> _getCompanies(
+      String accessToken, Map<String, dynamic> game) async {
     try {
       await _getDevelopersAndPublishers(accessToken, game);
       var ids_array = [];
@@ -166,19 +164,20 @@ class IGDB implements Service {
             _publishers.removeAt(i);
           }
         }
-      } 
-    }
-    catch (e) {}
+      }
+    } catch (e) {}
   }
 
-  Future<void> _getDevelopersAndPublishers(String accessToken, Map<String, dynamic> game) async {
+  Future<void> _getDevelopersAndPublishers(
+      String accessToken, Map<String, dynamic> game) async {
     try {
       final url = Uri.parse("https://api.igdb.com/v4/involved_companies");
       final headers = {
         "Client-ID": clientIdIGDB,
         "Authorization": "Bearer $accessToken",
       };
-      final body = "fields company,developer,publisher; where id = ${_formatIds(game, 'involved_companies')} & (developer = true | publisher = true);";
+      final body =
+          "fields company,developer,publisher; where id = ${_formatIds(game, 'involved_companies')} & (developer = true | publisher = true);";
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         var companies = jsonDecode(response.body);
@@ -191,11 +190,11 @@ class IGDB implements Service {
           }
         }
       }
-    }
-    catch (e) {}
+    } catch (e) {}
   }
 
-  Future<void> _getFranchises(String accessToken, Map<String, dynamic> game) async {
+  Future<void> _getFranchises(
+      String accessToken, Map<String, dynamic> game) async {
     try {
       if (game['franchise'] != null) {
         game['franchises'].add(game['franchise']);
@@ -213,9 +212,8 @@ class IGDB implements Service {
         for (int i = 0; i < franchises.length; ++i) {
           _franchises.add(utf8.decode(franchises[i]['name'].runes.toList()));
         }
-      } 
-    }
-    catch (e) {}
+      }
+    } catch (e) {}
   }
 
   Future<void> _getGenres(String accessToken, Map<String, dynamic> game) async {
@@ -232,12 +230,12 @@ class IGDB implements Service {
         for (int i = 0; i < genres.length; ++i) {
           _genres.add(utf8.decode(genres[i]['name'].runes.toList()));
         }
-      } 
-    }
-    catch (e) {}
+      }
+    } catch (e) {}
   }
 
-  Future<void> _getWebsites(String accessToken, Map<String, dynamic> game) async {
+  Future<void> _getWebsites(
+      String accessToken, Map<String, dynamic> game) async {
     try {
       final url = Uri.parse("https://api.igdb.com/v4/websites");
       final headers = {
@@ -251,9 +249,8 @@ class IGDB implements Service {
         for (int i = 0; i < websites.length; ++i) {
           _websites.add(websites[i]['url']);
         }
-      } 
-    }
-    catch (e) {}
+      }
+    } catch (e) {}
   }
 
   bool _containsAllWords(String name, String gameName) {
@@ -268,11 +265,14 @@ class IGDB implements Service {
 
   List<dynamic> _filterGames(games) {
     final badWords = ["bundle", "pack"];
-    return games.where((game) => !badWords.any((word) => game['name'].toLowerCase().contains(word))).toList();
+    return games
+        .where((game) =>
+            !badWords.any((word) => game['name'].toLowerCase().contains(word)))
+        .toList();
   }
 
-
-  Future<List<dynamic>> _getAdditionalGames(String accessToken, List<dynamic> games) async {
+  Future<List<dynamic>> _getAdditionalGames(
+      String accessToken, List<dynamic> games) async {
     try {
       List<dynamic> ids = [];
       for (int i = 0; i < games.length; ++i) {
@@ -284,18 +284,17 @@ class IGDB implements Service {
         "Client-ID": clientIdIGDB,
         "Authorization": "Bearer $accessToken",
       };
-      final body = "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,rating,remakes,remasters,similar_games,summary,url,websites; where parent_game = (${ids.join(", ")});";
+      final body =
+          "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,rating,remakes,remasters,similar_games,summary,url,websites; where parent_game = (${ids.join(", ")});";
       return http.post(url, headers: headers, body: body).then((response) {
         if (response.statusCode == 200) {
           var dlcsRemakesRemasters = jsonDecode(response.body);
           return _filterGames(dlcsRemakesRemasters);
-        } 
-        else {
+        } else {
           return [];
         }
       });
-    }
-    catch (e) {
+    } catch (e) {
       return [];
     }
   }
@@ -316,33 +315,39 @@ class IGDB implements Service {
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         var games = jsonDecode(response.body);
-        games = _filterGames(games).where((game) => _containsAllWords(game['name'], gameName)).toList();
+        games = _filterGames(games)
+            .where((game) => _containsAllWords(game['name'], gameName))
+            .toList();
         var additionalGames = await _getAdditionalGames(_accessToken, games);
-        additionalGames = _filterGames(additionalGames).where((game) => _containsAllWords(game['name'], gameName)).toList();
+        additionalGames = _filterGames(additionalGames)
+            .where((game) => _containsAllWords(game['name'], gameName))
+            .toList();
         games.addAll(additionalGames);
         for (int i = 0; i < games.length; ++i) {
           games[i]['name'] = utf8.decode(games[i]['name'].runes.toList());
           if (games[i]['first_release_date'] != null) {
             // Turn the Unix timestamp into a DateTime object
-            games[i]['first_release_date'] = DateTime.fromMillisecondsSinceEpoch(games[i]['first_release_date'] * 1000);
+            games[i]['first_release_date'] =
+                DateTime.fromMillisecondsSinceEpoch(
+                    games[i]['first_release_date'] * 1000);
 
             // Add the year to the game name
             games[i]['name'] += " (${games[i]['first_release_date'].year})";
 
             // Format the date as a string, removing the time
-            games[i]['first_release_date'] = games[i]['first_release_date'].toString().substring(0, 10);
+            games[i]['first_release_date'] =
+                games[i]['first_release_date'].toString().substring(0, 10);
           }
           if (games[i]['summary'] != null) {
-            games[i]['summary'] = utf8.decode(games[i]['summary'].runes.toList());
+            games[i]['summary'] =
+                utf8.decode(games[i]['summary'].runes.toList());
           }
         }
         return List<Map<String, dynamic>>.from(games);
-      } 
-      else {
+      } else {
         return [];
       }
-    }
-    catch (e) {
+    } catch (e) {
       return [];
     }
   }
@@ -363,29 +368,34 @@ class IGDB implements Service {
       for (int i = 0; i < games.length; ++i) {
         ids.add(games[i].toString());
       }
-      final similarGamesBody = "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,rating,remakes,remasters,summary,url,websites; where parent_game = (${ids.join(", ")});";
-      final similarGamesResponse = await http.post(url, headers: headers, body: similarGamesBody);
+      final similarGamesBody =
+          "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,rating,remakes,remasters,summary,url,websites; where parent_game = (${ids.join(", ")});";
+      final similarGamesResponse =
+          await http.post(url, headers: headers, body: similarGamesBody);
       if (similarGamesResponse.statusCode == 200) {
         games = jsonDecode(similarGamesResponse.body);
         for (int i = 0; i < games.length; ++i) {
           games[i]['name'] = utf8.decode(games[i]['name'].runes.toList());
           if (games[i]['first_release_date'] != null) {
             // Turn the Unix timestamp into a DateTime object
-            games[i]['first_release_date'] = DateTime.fromMillisecondsSinceEpoch(games[i]['first_release_date'] * 1000);
+            games[i]['first_release_date'] =
+                DateTime.fromMillisecondsSinceEpoch(
+                    games[i]['first_release_date'] * 1000);
 
             // Add the year to the game name
             games[i]['name'] += " (${games[i]['first_release_date'].year})";
 
             // Format the date as a string, removing the time
-            games[i]['first_release_date'] = games[i]['first_release_date'].toString().substring(0, 10);
+            games[i]['first_release_date'] =
+                games[i]['first_release_date'].toString().substring(0, 10);
           }
           if (games[i]['summary'] != null) {
-            games[i]['summary'] = utf8.decode(games[i]['summary'].runes.toList());
+            games[i]['summary'] =
+                utf8.decode(games[i]['summary'].runes.toList());
           }
         }
         return List<Map<String, dynamic>>.from(games);
       }
-
     }
     return [];
   }
@@ -411,8 +421,7 @@ class IGDB implements Service {
       await _getFranchises(_accessToken, game);
       if (game['collections'] != null) {
         game['collections'] += _franchises;
-      }
-      else {
+      } else {
         game['collections'] = _franchises;
       }
     }

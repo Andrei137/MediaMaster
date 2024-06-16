@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:test/test.dart';
 import '../../lib/API/general/ServiceHandler.dart';
 import '../../lib/API/general/ServiceBuilder.dart';
@@ -10,7 +9,12 @@ double getHours(String time) {
 
 void main() {
   group('PcGamingWiki', () {
-    final games = ['Hollow Knight', 'God of War', 'League of Legends', 'Minecraft']; 
+    final games = [
+      'Hollow Knight',
+      'God of War',
+      'League of Legends',
+      'Minecraft'
+    ];
 
     setUp(() {
       ServiceBuilder.setPcGamingWiki();
@@ -34,7 +38,7 @@ void main() {
 
       expect(options, isEmpty);
     });
-    
+
     test('getInfo for a valid game', () async {
       final options = await ServiceHandler.getOptions('Hollow Knight');
       final game_info = await ServiceHandler.getInfo(options[0]);

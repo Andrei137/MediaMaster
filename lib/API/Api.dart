@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:dart_console/dart_console.dart';
-import 'general/Constants.dart';
 import 'general/ServiceHandler.dart';
 import 'general/ServiceBuilder.dart';
 
@@ -22,16 +21,13 @@ int getUserInput(List<Map<String, dynamic>> options) {
       final index = int.parse(choice);
       if (index > 0 && index <= options.length) {
         return index;
-      } 
-      else {
+      } else {
         return 0;
       }
-    } 
-    else {
+    } else {
       return 0;
     }
-  } 
-  catch (e) {
+  } catch (e) {
     return 0;
   }
 }

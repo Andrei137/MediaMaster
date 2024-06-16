@@ -46,6 +46,7 @@ dependencies:
   flutter_bloc: ^7.3.3
   equatable: ^2.0.3
   email_validator: ^2.0.1
+  test: ^1.25.7
 
 dev_dependencies:
   flutter_test:
@@ -99,3 +100,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+scripts:
+  test_igdb: dart test/services/IGDB_test.dart
+  test_hltb: dart test/services/HowLongToBeat_test.dart
+  test_pcgw: dart test/services/PcGamingWiki_test.dart
+  test_all: flutter test test/services
