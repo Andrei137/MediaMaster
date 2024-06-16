@@ -8,29 +8,21 @@ import 'Auth/signup_bloc.dart';
 import 'Auth/login_screen.dart';
 import 'Auth/login_bloc.dart';
 
-import 'Testing/test_db_relationships.dart';
-
 void main() async {
   await initHiveAndAdapters();
-  bool testing = false;
+  addSeedData();
 
-  if (testing) {
-    testAllRelationships();
-  } else {
-    addSeedData();
-
-    runApp(
-      MaterialApp(
-        title: 'MediaMaster',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Color.fromARGB(219, 10, 94, 87),
-          ),
+  runApp(
+    MaterialApp(
+      title: 'MediaMaster',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Color.fromARGB(219, 10, 94, 87),
         ),
-        home: const Home(),
       ),
-    );
-  }
+      home: const Home(),
+    ),
+  );
 }
 
 class Home extends StatefulWidget {

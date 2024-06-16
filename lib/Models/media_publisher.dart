@@ -2,8 +2,6 @@ import 'package:hive/hive.dart';
 import 'media.dart';
 import 'publisher.dart';
 
-// Don't change the number below (typeId).
-// For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class MediaPublisher extends HiveObject {
   // Hive fields
   int mediaId;
@@ -16,41 +14,44 @@ class MediaPublisher extends HiveObject {
   MediaPublisher({required this.mediaId, required this.publisherId});
 
   @override
-  bool operator==(Object other) {
-    if(runtimeType != other.runtimeType) {
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
       return false;
     }
-    return mediaId == (other as MediaPublisher).mediaId && publisherId == other.publisherId;
+    return mediaId == (other as MediaPublisher).mediaId &&
+        publisherId == other.publisherId;
   }
-  
+
   @override
   int get hashCode => Object.hash(mediaId, publisherId);
 
   Media get media {
-    if(_media == null) {
+    if (_media == null) {
       Box<Media> box = Hive.box<Media>('media');
-      for(int i = 0;i < box.length;++i) {
-        if(mediaId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (mediaId == box.getAt(i)!.id) {
           _media = box.getAt(i);
         }
       }
-      if(_media == null) {
-        throw Exception("MediaPublisher of mediaId $mediaId and publisherId $publisherId does not have an associated Media object or mediaId value is wrong");
+      if (_media == null) {
+        throw Exception(
+            "MediaPublisher of mediaId $mediaId and publisherId $publisherId does not have an associated Media object or mediaId value is wrong");
       }
     }
     return _media!;
   }
 
   Publisher get publisher {
-    if(_publisher == null) {
+    if (_publisher == null) {
       Box<Publisher> box = Hive.box<Publisher>('publishers');
-      for(int i = 0;i < box.length;++i) {
-        if(publisherId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (publisherId == box.getAt(i)!.id) {
           _publisher = box.getAt(i);
         }
       }
-      if(_publisher == null) {
-        throw Exception("MediaPublisher of mediaId $mediaId and publisherId $publisherId does not have an associated Publisher object or publisherId value is wrong");
+      if (_publisher == null) {
+        throw Exception(
+            "MediaPublisher of mediaId $mediaId and publisherId $publisherId does not have an associated Publisher object or publisherId value is wrong");
       }
     }
     return _publisher!;

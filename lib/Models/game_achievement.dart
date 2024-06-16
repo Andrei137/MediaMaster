@@ -1,8 +1,6 @@
 import 'package:hive/hive.dart';
 import 'game.dart';
 
-// Don't change the number below (typeId).
-// For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class GameAchievement extends HiveObject {
   // Hive fields
   int id;
@@ -21,35 +19,36 @@ class GameAchievement extends HiveObject {
       required this.gameId,
       required this.name,
       required this.description}) {
-        if(id == -1) {
-          id = nextId;
-        }
-        if(id >= nextId) {
-          nextId = id + 1;
-        }
-      }
-  
+    if (id == -1) {
+      id = nextId;
+    }
+    if (id >= nextId) {
+      nextId = id + 1;
+    }
+  }
+
   @override
-  bool operator==(Object other) {
-    if(runtimeType != other.runtimeType) {
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
       return false;
     }
     return id == (other as GameAchievement).id;
   }
-  
+
   @override
   int get hashCode => id;
 
   Game get game {
-    if(_game == null) {
+    if (_game == null) {
       Box<Game> box = Hive.box<Game>('games');
-      for(int i = 0;i < box.length;++i) {
-        if(gameId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (gameId == box.getAt(i)!.id) {
           _game = box.getAt(i);
         }
       }
-      if(_game == null) {
-        throw Exception("Game Achievement of id $id does not have an associated Game object or gameId value is wrong ($gameId)");
+      if (_game == null) {
+        throw Exception(
+            "Game Achievement of id $id does not have an associated Game object or gameId value is wrong ($gameId)");
       }
     }
     return _game!;

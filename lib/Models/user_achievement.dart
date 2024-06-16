@@ -2,8 +2,6 @@ import 'package:hive/hive.dart';
 import 'user.dart';
 import 'app_achievement.dart';
 
-// Don't change the number below (typeId).
-// For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class UserAchievement extends HiveObject {
   // Hive fields
   int userId;
@@ -20,41 +18,44 @@ class UserAchievement extends HiveObject {
       required this.unlockDate});
 
   @override
-  bool operator==(Object other) {
-    if(runtimeType != other.runtimeType) {
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
       return false;
     }
-    return userId == (other as UserAchievement).userId && achievementId == other.achievementId;
+    return userId == (other as UserAchievement).userId &&
+        achievementId == other.achievementId;
   }
-  
+
   @override
   int get hashCode => Object.hash(userId, achievementId);
 
   User get user {
-    if(_user == null) {
+    if (_user == null) {
       Box<User> box = Hive.box<User>('users');
-      for(int i = 0;i < box.length;++i) {
-        if(userId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (userId == box.getAt(i)!.id) {
           _user = box.getAt(i);
         }
       }
-      if(_user == null) {
-        throw Exception("UserAchievement of userId $userId and achievementId $achievementId does not have an associated User object or userId value is wrong");
+      if (_user == null) {
+        throw Exception(
+            "UserAchievement of userId $userId and achievementId $achievementId does not have an associated User object or userId value is wrong");
       }
     }
     return _user!;
   }
 
   AppAchievement get achievement {
-    if(_achievement == null) {
+    if (_achievement == null) {
       Box<AppAchievement> box = Hive.box<AppAchievement>('appAchievements');
-      for(int i = 0;i < box.length;++i) {
-        if(achievementId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (achievementId == box.getAt(i)!.id) {
           _achievement = box.getAt(i);
         }
       }
-      if(_achievement == null) {
-        throw Exception("UserAchievement of userId $userId and achievementId $achievementId does not have an associated AppAchievement object or achievementId value is wrong");
+      if (_achievement == null) {
+        throw Exception(
+            "UserAchievement of userId $userId and achievementId $achievementId does not have an associated AppAchievement object or achievementId value is wrong");
       }
     }
     return _achievement!;

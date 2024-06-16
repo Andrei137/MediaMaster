@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'media.dart';
 
-// Don't change the number below (typeId).
-// For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class Game extends HiveObject {
   // Hive fields
   int mediaId;
@@ -58,64 +56,75 @@ class Game extends HiveObject {
       this.HLTBCoopInSeconds = -1,
       this.HLTBVersusInSeconds = -1,
       this.HLTBSingleplayerInSeconds = -1}) {
-        if(id == -1) {
-          id = nextId;
-        }
-        if(id >= nextId) {
-          nextId = id + 1;
-        }
-      }
+    if (id == -1) {
+      id = nextId;
+    }
+    if (id >= nextId) {
+      nextId = id + 1;
+    }
+  }
 
   @override
-  bool operator==(Object other) {
-    if(runtimeType != other.runtimeType) {
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
       return false;
     }
     return id == (other as Game).id;
   }
-  
+
   @override
   int get hashCode => id;
 
   Media get media {
-    if(_media == null) {
+    if (_media == null) {
       Box<Media> box = Hive.box<Media>('media');
-      for(int i = 0;i < box.length;++i) {
-        if(mediaId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (mediaId == box.getAt(i)!.id) {
           _media = box.getAt(i);
         }
       }
-      if(_media == null) {
-        throw Exception("Game of id $id does not have an associated Media object or mediaId value is wrong ($mediaId)");
+      if (_media == null) {
+        throw Exception(
+            "Game of id $id does not have an associated Media object or mediaId value is wrong ($mediaId)");
       }
     }
     return _media!;
   }
 
   Game? get parentGame {
-    if(parentGameId == -1) {
+    if (parentGameId == -1) {
       return null;
     }
-    if(_parentGame == null) {
+    if (_parentGame == null) {
       Box<Game> box = Hive.box<Game>('games');
-      for(int i = 0;i < box.length;++i) {
-        if(parentGameId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (parentGameId == box.getAt(i)!.id) {
           _parentGame = box.getAt(i);
         }
       }
-      if(_parentGame == null) {
-        throw Exception("Game of id $id does not have an associated Parent Game object or gameId value is wrong ($parentGameId)");
+      if (_parentGame == null) {
+        throw Exception(
+            "Game of id $id does not have an associated Parent Game object or gameId value is wrong ($parentGameId)");
       }
     }
     return _parentGame!;
   }
 
   int getMinTimeToBeat() {
-    List<int> times = List.from([HLTBAllStylesInSeconds, HLTBCompletionistInSeconds, HLTBCoopInSeconds, HLTBMainInSeconds, HLTBMainSideInSeconds, HLTBSingleplayerInSeconds, HLTBSoloInSeconds, HLTBVersusInSeconds]);
+    List<int> times = List.from([
+      HLTBAllStylesInSeconds,
+      HLTBCompletionistInSeconds,
+      HLTBCoopInSeconds,
+      HLTBMainInSeconds,
+      HLTBMainSideInSeconds,
+      HLTBSingleplayerInSeconds,
+      HLTBSoloInSeconds,
+      HLTBVersusInSeconds
+    ]);
     int minTime = -1;
 
-    for(int time in times) {
-      if(minTime == -1 || minTime > time) {
+    for (int time in times) {
+      if (minTime == -1 || minTime > time) {
         minTime = time;
       }
     }
@@ -124,25 +133,29 @@ class Game extends HiveObject {
   }
 
   Widget renderHLTB() {
-    String formatTime(int timeInSeconds, {bool days = false, bool seconds = false}) {
-      if(timeInSeconds < 0) {
+    String formatTime(int timeInSeconds,
+        {bool days = false, bool seconds = false}) {
+      if (timeInSeconds < 0) {
         return "Value missing. Contact an admin";
       }
 
       String daysStr = "";
-      if(days && timeInSeconds >= 60 * 60 * 24) {
-        daysStr = "${timeInSeconds ~/ (60 * 60 * 24)} day${timeInSeconds ~/ (60 * 60 * 24) > 1 ? 's' : ''}, ";
+      if (days && timeInSeconds >= 60 * 60 * 24) {
+        daysStr =
+            "${timeInSeconds ~/ (60 * 60 * 24)} day${timeInSeconds ~/ (60 * 60 * 24) > 1 ? 's' : ''}, ";
         timeInSeconds %= 60 * 60 * 24;
       }
 
-      String hoursStr = "${timeInSeconds ~/ (60 * 60)} hour${timeInSeconds ~/ (60 * 60) > 1 ? 's' : ''}, ";
+      String hoursStr =
+          "${timeInSeconds ~/ (60 * 60)} hour${timeInSeconds ~/ (60 * 60) > 1 ? 's' : ''}, ";
       timeInSeconds %= 60 * 60;
 
-      String minutesStr = "${timeInSeconds ~/ 60} minute${timeInSeconds ~/ 60 > 1 ? 's' : ''}";
+      String minutesStr =
+          "${timeInSeconds ~/ 60} minute${timeInSeconds ~/ 60 > 1 ? 's' : ''}";
       timeInSeconds %= 60;
 
       String secondsStr = "";
-      if(seconds && timeInSeconds != 0) {
+      if (seconds && timeInSeconds != 0) {
         secondsStr = ", $timeInSeconds";
       }
 

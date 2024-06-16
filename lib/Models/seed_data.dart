@@ -4,7 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 void addSeedData() {
   var tags = Hive.box<Tag>('tags');
-  if(tags.isEmpty) {
+  if (tags.isEmpty) {
     var tagsToAdd = [
       "Singleplayer",
       "Multiplayer",
@@ -16,8 +16,8 @@ void addSeedData() {
       "Local Co-Op",
       "MMO",
     ];
-    
-    for(String tagName in tagsToAdd) {
+
+    for (String tagName in tagsToAdd) {
       tags.add(
         Tag(
           name: tagName,
@@ -27,7 +27,7 @@ void addSeedData() {
   }
 
   var genres = Hive.box<Genre>('genres');
-  if(genres.isEmpty) {
+  if (genres.isEmpty) {
     var genresToAdd = [
       "Shooter",
       "Strategy",
@@ -66,8 +66,8 @@ void addSeedData() {
       "Cooking",
       "MOBA",
     ];
-    
-    for(String genreName in genresToAdd) {
+
+    for (String genreName in genresToAdd) {
       genres.add(
         Genre(
           name: genreName,

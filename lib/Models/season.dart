@@ -1,8 +1,6 @@
 import 'package:hive/hive.dart';
 import 'tv_series.dart';
 
-// Don't change the number below (typeId).
-// For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class Season extends HiveObject {
   // Hive fields
   int id;
@@ -21,35 +19,36 @@ class Season extends HiveObject {
       required this.tvSeriesId,
       required this.name,
       required this.coverImage}) {
-        if(id == -1) {
-          id = nextId;
-        }
-        if(id >= nextId) {
-          nextId = id + 1;
-        }
-      }
+    if (id == -1) {
+      id = nextId;
+    }
+    if (id >= nextId) {
+      nextId = id + 1;
+    }
+  }
 
   @override
-  bool operator==(Object other) {
-    if(runtimeType != other.runtimeType) {
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
       return false;
     }
     return id == (other as TvSeries).id;
   }
-  
+
   @override
   int get hashCode => id;
 
   TvSeries get tvSeries {
-    if(_tvSeries == null) {
+    if (_tvSeries == null) {
       Box<TvSeries> box = Hive.box<TvSeries>('tvSeries');
-      for(int i = 0;i < box.length;++i) {
-        if(tvSeriesId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (tvSeriesId == box.getAt(i)!.id) {
           _tvSeries = box.getAt(i);
         }
       }
-      if(_tvSeries == null) {
-        throw Exception("Season of id $id does not have an associated TvSeries object or tvSeriesId value is wrong ($tvSeriesId)");
+      if (_tvSeries == null) {
+        throw Exception(
+            "Season of id $id does not have an associated TvSeries object or tvSeriesId value is wrong ($tvSeriesId)");
       }
     }
     return _tvSeries!;

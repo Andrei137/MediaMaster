@@ -3,8 +3,6 @@ import 'tv_series.dart';
 import 'season.dart';
 import 'media.dart';
 
-// Don't change the number below (typeId).
-// For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class Episode extends HiveObject {
   // Hive fields
   int id;
@@ -27,65 +25,68 @@ class Episode extends HiveObject {
       required this.seasonId,
       this.mediaId = -1,
       required this.durationInSeconds}) {
-        if(id == -1) {
-          id = nextId;
-        }
-        if(id >= nextId) {
-          nextId = id + 1;
-        }
-      }
+    if (id == -1) {
+      id = nextId;
+    }
+    if (id >= nextId) {
+      nextId = id + 1;
+    }
+  }
 
   @override
-  bool operator==(Object other) {
-    if(runtimeType != other.runtimeType) {
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
       return false;
     }
     return id == (other as Episode).id;
   }
-  
+
   @override
   int get hashCode => id;
 
   TvSeries get tvSeries {
-    if(_tvSeries == null) {
+    if (_tvSeries == null) {
       Box<TvSeries> box = Hive.box<TvSeries>('tvSeries');
-      for(int i = 0;i < box.length;++i) {
-        if(tvSeriesId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (tvSeriesId == box.getAt(i)!.id) {
           _tvSeries = box.getAt(i);
         }
       }
-      if(_tvSeries == null) {
-        throw Exception("Episode of id $id does not have an associated Tv Series object or tvSeriesId value is wrong ($tvSeriesId)");
+      if (_tvSeries == null) {
+        throw Exception(
+            "Episode of id $id does not have an associated Tv Series object or tvSeriesId value is wrong ($tvSeriesId)");
       }
     }
     return _tvSeries!;
   }
 
   Season get season {
-    if(_season == null) {
+    if (_season == null) {
       Box<Season> box = Hive.box<Season>('seasons');
-      for(int i = 0;i < box.length;++i) {
-        if(tvSeriesId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (tvSeriesId == box.getAt(i)!.id) {
           _season = box.getAt(i);
         }
       }
-      if(_season == null) {
-        throw Exception("Episode of id $id does not have an associated Season object or seasonId value is wrong ($seasonId)");
+      if (_season == null) {
+        throw Exception(
+            "Episode of id $id does not have an associated Season object or seasonId value is wrong ($seasonId)");
       }
     }
     return _season!;
   }
 
   Media get media {
-    if(_media == null) {
+    if (_media == null) {
       Box<Media> box = Hive.box<Media>('media');
-      for(int i = 0;i < box.length;++i) {
-        if(mediaId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (mediaId == box.getAt(i)!.id) {
           _media = box.getAt(i);
         }
       }
-      if(_media == null) {
-        throw Exception("Episode of id $id does not have an associated Media object or mediaId value is wrong ($mediaId)");
+      if (_media == null) {
+        throw Exception(
+            "Episode of id $id does not have an associated Media object or mediaId value is wrong ($mediaId)");
       }
     }
     return _media!;

@@ -1,8 +1,6 @@
 import 'package:hive/hive.dart';
 import 'media.dart';
 
-// Don't change the number below (typeId).
-// For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class Movie extends HiveObject {
   // Hive fields
   int id;
@@ -21,35 +19,36 @@ class Movie extends HiveObject {
       required this.mediaId,
       required this.originalLanguage,
       required this.durationInseconds}) {
-        if(id == -1) {
-          id = nextId;
-        }
-        if(id >= nextId) {
-          nextId = id + 1;
-        }
-      }
+    if (id == -1) {
+      id = nextId;
+    }
+    if (id >= nextId) {
+      nextId = id + 1;
+    }
+  }
 
   @override
-  bool operator==(Object other) {
-    if(runtimeType != other.runtimeType) {
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
       return false;
     }
     return id == (other as Movie).id;
   }
-  
+
   @override
   int get hashCode => id;
 
   Media get media {
-    if(_media == null) {
+    if (_media == null) {
       Box<Media> box = Hive.box<Media>('media');
-      for(int i = 0;i < box.length;++i) {
-        if(mediaId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (mediaId == box.getAt(i)!.id) {
           _media = box.getAt(i);
         }
       }
-      if(_media == null) {
-        throw Exception("Movie of id $id does not have an associated Media object or mediaId value is wrong ($mediaId)");
+      if (_media == null) {
+        throw Exception(
+            "Movie of id $id does not have an associated Media object or mediaId value is wrong ($mediaId)");
       }
     }
     return _media!;

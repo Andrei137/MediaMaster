@@ -11,8 +11,6 @@ import 'media_publisher.dart';
 import 'platform.dart';
 import 'publisher.dart';
 
-// Don't change the number below (typeId).
-// For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class Media extends HiveObject {
   // Hive fields
   int id;
@@ -37,38 +35,39 @@ class Media extends HiveObject {
       required this.criticScore,
       required this.communityScore,
       required this.mediaType}) {
-        if(id == -1) {
-          id = nextId;
-        }
-        if(id >= nextId) {
-          nextId = id + 1;
-        }
-      }
+    if (id == -1) {
+      id = nextId;
+    }
+    if (id >= nextId) {
+      nextId = id + 1;
+    }
+  }
 
   @override
-  bool operator==(Object other) {
-    if(runtimeType != other.runtimeType) {
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
       return false;
     }
     return id == (other as Media).id;
   }
-  
+
   @override
   int get hashCode => id;
 
   HiveObject get media {
-    if(_media == null) {
-      if(mediaType == "Game") {
+    if (_media == null) {
+      if (mediaType == "Game") {
         Box<Game> box = Hive.box<Game>('games');
-        for(int i = 0;i < box.length;++i) {
-          if(id == box.getAt(i)!.mediaId) {
+        for (int i = 0; i < box.length; ++i) {
+          if (id == box.getAt(i)!.mediaId) {
             _media = box.getAt(i);
           }
         }
       }
       // TODO: Implement the other types
-      if(_media == null) {
-        throw Exception("Media of id $id does not have an associated (concrete) Media object or mediaType value is wrong ($mediaType)");
+      if (_media == null) {
+        throw Exception(
+            "Media of id $id does not have an associated (concrete) Media object or mediaType value is wrong ($mediaType)");
       }
     }
     return _media!;
@@ -76,9 +75,9 @@ class Media extends HiveObject {
 
   List<Publisher> get publishers {
     List<Publisher> ans = List.empty();
-    
-    for(var mp in Hive.box<MediaPublisher>('media-publishers').values) {
-      if(mp.mediaId == id) {
+
+    for (var mp in Hive.box<MediaPublisher>('media-publishers').values) {
+      if (mp.mediaId == id) {
         ans.add(mp.publisher);
       }
     }
@@ -97,7 +96,7 @@ class Media extends HiveObject {
             color: Colors.white,
           ),
         ),
-        for(var pub in pubs)
+        for (var pub in pubs)
           Text(
             pub.name,
             style: const TextStyle(
@@ -110,9 +109,9 @@ class Media extends HiveObject {
 
   List<Creator> get creators {
     List<Creator> ans = List.empty();
-    
-    for(var mc in Hive.box<MediaCreator>('media-creators').values) {
-      if(mc.mediaId == id) {
+
+    for (var mc in Hive.box<MediaCreator>('media-creators').values) {
+      if (mc.mediaId == id) {
         ans.add(mc.creator);
       }
     }
@@ -131,7 +130,7 @@ class Media extends HiveObject {
             color: Colors.white,
           ),
         ),
-        for(var crt in crts)
+        for (var crt in crts)
           Text(
             crt.name,
             style: const TextStyle(
@@ -144,9 +143,9 @@ class Media extends HiveObject {
 
   List<Platform> get platforms {
     List<Platform> ans = List.empty();
-    
-    for(var mp in Hive.box<MediaPlatform>('media-platforms').values) {
-      if(mp.mediaId == id) {
+
+    for (var mp in Hive.box<MediaPlatform>('media-platforms').values) {
+      if (mp.mediaId == id) {
         ans.add(mp.platform);
       }
     }
@@ -165,7 +164,7 @@ class Media extends HiveObject {
             color: Colors.white,
           ),
         ),
-        for(var plt in plts)
+        for (var plt in plts)
           Text(
             plt.name,
             style: const TextStyle(

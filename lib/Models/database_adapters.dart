@@ -30,7 +30,7 @@ import 'wishlist.dart';
 
 Future<void> initHiveAndAdapters() async {
   await Hive.initFlutter();
-  
+
   Hive.registerAdapter(AppAchievementAdapter());
   Hive.registerAdapter(BookAdapter());
   Hive.registerAdapter(CreatorAdapter());
@@ -59,7 +59,7 @@ Future<void> initHiveAndAdapters() async {
   Hive.registerAdapter(UserAdapter());
   Hive.registerAdapter(UserAchievementAdapter());
   Hive.registerAdapter(WishlistAdapter());
-  
+
   await Hive.openBox<AppAchievement>('appAchievements');
   await Hive.openBox<Book>('books');
   await Hive.openBox<Creator>('creators');

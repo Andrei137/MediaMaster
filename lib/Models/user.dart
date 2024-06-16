@@ -1,7 +1,5 @@
 import 'package:hive/hive.dart';
 
-// Don't change the number below (typeId).
-// For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class User extends HiveObject {
   // Hive fields
   int id;

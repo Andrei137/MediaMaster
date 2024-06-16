@@ -2,8 +2,6 @@ import 'package:hive/hive.dart';
 import 'media.dart';
 import 'user.dart';
 
-// Don't change the number below (typeId).
-// For information regarding what can be modified check out https://docs.hivedb.dev/#/custom-objects/generate_adapter
 class MediaUser extends HiveObject {
   // Hive fields
   int mediaId;
@@ -40,41 +38,43 @@ class MediaUser extends HiveObject {
       this.bookReadPages = 0});
 
   @override
-  bool operator==(Object other) {
-    if(runtimeType != other.runtimeType) {
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
       return false;
     }
     return mediaId == (other as MediaUser).mediaId && userId == other.userId;
   }
-  
+
   @override
   int get hashCode => Object.hash(mediaId, userId);
 
   Media get media {
-    if(_media == null) {
+    if (_media == null) {
       Box<Media> box = Hive.box<Media>('media');
-      for(int i = 0;i < box.length;++i) {
-        if(mediaId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (mediaId == box.getAt(i)!.id) {
           _media = box.getAt(i);
         }
       }
-      if(_media == null) {
-        throw Exception("MediaUser of mediaId $mediaId and userId $userId does not have an associated Media object or mediaId value is wrong");
+      if (_media == null) {
+        throw Exception(
+            "MediaUser of mediaId $mediaId and userId $userId does not have an associated Media object or mediaId value is wrong");
       }
     }
     return _media!;
   }
 
   User get user {
-    if(_user == null) {
+    if (_user == null) {
       Box<User> box = Hive.box<User>('users');
-      for(int i = 0;i < box.length;++i) {
-        if(userId == box.getAt(i)!.id) {
+      for (int i = 0; i < box.length; ++i) {
+        if (userId == box.getAt(i)!.id) {
           _user = box.getAt(i);
         }
       }
-      if(_user == null) {
-        throw Exception("MediaUser of mediaId $mediaId and userId $userId does not have an associated User object or userId value is wrong");
+      if (_user == null) {
+        throw Exception(
+            "MediaUser of mediaId $mediaId and userId $userId does not have an associated User object or userId value is wrong");
       }
     }
     return _user!;
