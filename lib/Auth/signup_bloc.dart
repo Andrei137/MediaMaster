@@ -62,12 +62,11 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
       yield SignUpLoading();
 
       try {
-        await Future.delayed(const Duration(seconds: 2));
+        await Future.delayed(const Duration(seconds: 1));
         List<Object> list = event.props;
         addUser(list[1].toString(), list[2].toString(), list[3].toString(),
             list[4].toString());
         yield SignUpSuccess();
-        await Future.delayed(const Duration(seconds: 3));
         Navigator.pop(list[0] as BuildContext);
       } catch (error) {
         yield SignUpFailure(error: error.toString());

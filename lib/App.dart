@@ -1,9 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:http/http.dart' as http;
 import 'package:mediamaster/Models/note.dart';
 import 'package:pair/pair.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'API/general/ServiceHandler.dart';
 import 'API/general/ServiceBuilder.dart';
@@ -11,11 +10,17 @@ import 'Main.dart';
 
 import 'Models/game.dart';
 import 'Models/genre.dart';
+import 'Models/publisher.dart';
+import 'Models/platform.dart';
+import 'Models/creator.dart';
+import 'Models/tag.dart';
 import 'Models/media.dart';
 import 'Models/media_user.dart';
 import 'Models/media_user_tag.dart';
 import 'Models/media_user_genre.dart';
-import 'Models/tag.dart';
+import 'Models/media_publisher.dart';
+import 'Models/media_platform.dart';
+import 'Models/media_creator.dart';
 
 import 'UserSystem.dart';
 
@@ -94,12 +99,11 @@ class MyAppState extends State<MyApp> {
   late Box<Tag> tags;
   late Box<Genre> genres;
 
-  // Placeholder image URL
-  static const String placeholderImageUrl =
-      //'https://uncensoredtactical.com/wp-content/uploads/2021/04/Placeholder-1920x1080-1.jpg';
-      'https://wallpaperaccess.com/full/5341085.jpg';
-  static const String placeholderCoverUrl =
-      'https://www.pcgamesarchive.com/wp-content/uploads/2021/07/Hollow-Knight-cover.jpg';
+  // Image & Cover URL
+  static String imageUrl =
+      'https://wallpaperaccess.com/full/5341085.jpg'; // placeholder
+  static String coverUrl =
+      'https://www.pcgamesarchive.com/wp-content/uploads/2021/07/Hollow-Knight-cover.jpg'; // placeholder
 
   @override
   void initState() {
@@ -174,6 +178,7 @@ class MyAppState extends State<MyApp> {
           game.media.originalName.toLowerCase().contains(filterQuery)) {
         listTiles.add(
           ListTile(
+            leading: Icon(Icons.videogame_asset),
             title: Text(game.media.originalName),
             onTap: () {
               setState(() {
@@ -288,8 +293,7 @@ class MyAppState extends State<MyApp> {
           IconButton(
               onPressed: () {
                 UserSystem().logout();
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) => Home()));
+                Navigator.pop(context);
               },
               icon: const Icon(Icons.logout),
               tooltip: 'Log out')
@@ -351,15 +355,6 @@ class MyAppState extends State<MyApp> {
           Expanded(
             flex: 10,
             child: Container(
-              decoration:
-                  const /*We currently don't have "backgroundImage", thus the following is const. Remove const when we add the image*/ BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage(
-                      // gameBox.isNotEmpty ? gameBox.getAt(selectedGameIndex)!.backgroundImage : placeholderImageUrl
-                      placeholderImageUrl),
-                  fit: BoxFit.cover,
-                ),
-              ),
               child: _displayGame(UserSystem().getUserGames().isNotEmpty
                   ? UserSystem().getUserGames()[selectedGameIndex]
                   : null),
@@ -885,17 +880,22 @@ class MyAppState extends State<MyApp> {
     if (nullableGame == null) {
       Media media = Media(
         originalName: name,
-        description: selectedGame['summary'],
+        description:
+            selectedGame['summary'] ?? "There is no summary for this game.",
         releaseDate:
             DateTime.now(), //selectedGame['first_release_date'] as DateTime,
-        criticScore: selectedGame['critic_rating'],
-        communityScore: selectedGame['user_rating'],
+        criticScore: selectedGame['critic_rating'] != 0
+            ? selectedGame['critic_rating']
+            : 0,
+        communityScore:
+            selectedGame['user_rating'] != 0 ? selectedGame['user_rating'] : 0,
         mediaType: "Game",
       );
       Game newGame = Game(
         mediaId: media.id,
         parentGameId:
             -1 /*TODO in the next semester: Add parameter/call to API to check if this is a DLC*/,
+        IGDBId: selectedGame['id'],
         OSMinimum: answersPCGW.containsKey('OSMinimum') &&
                 answersPCGW['OSMinimum'] != null
             ? answersPCGW['OSMinimum']
@@ -953,6 +953,103 @@ class MyAppState extends State<MyApp> {
         HLTBVersusInSeconds:
             answersHLTB.containsKey('Vs.') ? answersHLTB['Vs.'] : -1,
       );
+
+      // get the publishers of the game
+      List<dynamic> gamePublishers = selectedGame['publishers'];
+      List<Publisher> newPublishers = List.empty(growable: true);
+      Box<Publisher> publishers = Hive.box<Publisher>('publishers');
+      Box<MediaPublisher> mediaPublishers =
+          Hive.box<MediaPublisher>('media-publishers');
+
+      for (dynamic publisher in gamePublishers) {
+        bool check = true;
+        for (int i = 0; i < publishers.length; i++) {
+          // if the creator exists in the DB, add a new entry to MediaPublisher
+          if (publishers.getAt(i)!.name == publisher.toString()) {
+            check = false;
+            mediaPublishers.add(MediaPublisher(
+              mediaId: media.id,
+              publisherId: publishers.getAt(i)!.id,
+            ));
+          }
+        }
+        // add the new creator to the newPublishers list in order to add it to the DB later
+        if (check == true) {
+          newPublishers.add(Publisher(name: publisher.toString()));
+        }
+      }
+
+      // add the new creators to the DB and add new entries to MediaPublisher
+      for (Publisher publisher in newPublishers) {
+        publishers.add(publisher);
+        mediaPublishers
+            .add(MediaPublisher(mediaId: media.id, publisherId: publisher.id));
+      }
+
+      // get the developers of the game
+      List<dynamic> gameCreators = selectedGame['developers'];
+      List<Creator> newCreators = List.empty(growable: true);
+      Box<Creator> creators = Hive.box<Creator>('creators');
+      Box<MediaCreator> mediaCreators =
+          Hive.box<MediaCreator>('media-creators');
+
+      for (dynamic creator in gameCreators) {
+        bool check = true;
+        for (int i = 0; i < creators.length; i++) {
+          // if the creator exists in the DB, add a new entry to MediaCreator
+          if (creators.getAt(i)!.name == creator.toString()) {
+            check = false;
+            mediaCreators.add(MediaCreator(
+              mediaId: media.id,
+              creatorId: creators.getAt(i)!.id,
+            ));
+          }
+        }
+        // add the new creator to the newCreators list in order to add it to the DB later
+        if (check == true) {
+          newCreators.add(Creator(name: creator.toString()));
+        }
+      }
+
+      // add the new creators to the DB and add new entries to MediaCreator
+      for (Creator creator in newCreators) {
+        creators.add(creator);
+        mediaCreators
+            .add(MediaCreator(mediaId: media.id, creatorId: creator.id));
+      }
+
+      // get the platforms of the game
+      List<dynamic> gamePlatforms = selectedGame['platforms'];
+      List<Platform> newPlatforms = List.empty(growable: true);
+      Box<Platform> platforms = Hive.box<Platform>('platforms');
+      Box<MediaPlatform> mediaPlatforms =
+          Hive.box<MediaPlatform>('media-platforms');
+
+      for (dynamic platform in gamePlatforms) {
+        bool check = true;
+        for (int i = 0; i < platforms.length; i++) {
+          // if the creator exists in the DB, add a new entry to MediaPlatform
+          if (platforms.getAt(i)!.name == platform.toString()) {
+            check = false;
+            mediaPlatforms.add(MediaPlatform(
+              mediaId: media.id,
+              platformId: platforms.getAt(i)!.id,
+            ));
+          }
+        }
+        // add the new creator to the newPlatformss list in order to add it to the DB later
+        if (check == true) {
+          newPlatforms.add(Platform(name: platform.toString()));
+        }
+      }
+
+      // add the new creators to the DB and add new entries to MediaPublisher
+      for (Platform platform in newPlatforms) {
+        platforms.add(platform);
+        mediaPlatforms
+            .add(MediaPlatform(mediaId: media.id, platformId: platform.id));
+      }
+
       await Hive.box<Media>('media').add(media);
       await Hive.box<Game>('games').add(newGame);
       nullableGame = newGame;
@@ -967,12 +1064,12 @@ class MyAppState extends State<MyApp> {
         name: game.media.originalName,
         userScore: -1,
         addedDate: DateTime.now(),
-        coverImage: "placeholder.png" /*Add a basic cover image*/,
+        coverImage: selectedGame["cover"],
         status: "Plan To Play",
         series:
             game.media.originalName /*Add parameter/call to game series API*/,
-        icon: "placeholder.png" /*Add a basic cover image*/,
-        backgroundImage: "placeholder.png" /*Add a basic cover image*/,
+        icon: selectedGame["cover"],
+        backgroundImage: selectedGame["artworks"][0],
         lastInteracted: DateTime.now(),
       );
 
@@ -993,15 +1090,25 @@ class MyAppState extends State<MyApp> {
           ));
     }
 
+    Box<MediaUser> mediaUsers = Hive.box<MediaUser>('media-users');
+    for (int i = 0; i < mediaUsers.length; i++) {
+      if (mediaUsers.getAt(i)!.mediaId == game.mediaId &&
+          mediaUsers.getAt(i)!.userId == UserSystem().currentUser!.id) {
+        imageUrl = 'https:${mediaUsers.getAt(i)!.backgroundImage}';
+        coverUrl = 'https:${mediaUsers.getAt(i)!.coverImage}';
+        break;
+      }
+    }
+
     return SizedBox.expand(
       child: Container(
         padding: const EdgeInsets.only(
           top: 200,
         ),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: DecorationImage(
             image: NetworkImage(
-              placeholderImageUrl,
+              imageUrl,
             ),
             alignment: Alignment.topCenter,
           ),
@@ -1014,7 +1121,7 @@ class MyAppState extends State<MyApp> {
             child: Column(
               children: [
                 Center(
-                  // Game name; TODO: Remove this or move it or something
+                  // Game name;
                   child: Text(
                     game.media.originalName,
                     style: const TextStyle(color: Colors.white, fontSize: 24.0),
@@ -1115,6 +1222,24 @@ class MyAppState extends State<MyApp> {
                         ),
                       ),
                     ),
+                    Container(
+                      // Settings button
+                      margin: const EdgeInsets.all(10),
+                      child: TextButton(
+                        onPressed: () {
+                          _showGameRecommendationsDialog(game);
+                        },
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all(
+                              const Color.fromARGB(255, 32, 32, 32)),
+                          foregroundColor:
+                              MaterialStateProperty.all(Colors.white),
+                          overlayColor: MaterialStateProperty.all(
+                              const Color.fromARGB(255, 32, 32, 32)),
+                        ),
+                        child: const Text('Similar games'),
+                      ),
+                    ),
                   ],
                 ),
                 Row(
@@ -1126,10 +1251,9 @@ class MyAppState extends State<MyApp> {
                         margin: const EdgeInsets.all(
                           20,
                         ),
-                        child: const Image(
+                        child: Image(
                           image: NetworkImage(
-                            // TODO: Add link to cover image
-                            placeholderCoverUrl,
+                            coverUrl,
                           ),
                         ),
                       ),
@@ -1337,6 +1461,105 @@ class MyAppState extends State<MyApp> {
                             ],
                           ),
                       ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        });
+  }
+
+  Future<void> _showGameRecommendationsDialog(Game game) async {
+    void resetState() {
+      setState(() {});
+    }
+
+    ServiceBuilder.setIgdb();
+    var similarGames = await ServiceHandler.getRecommendations(game.IGDBId);
+    List<Widget> recommendations = [];
+
+    if (similarGames.isEmpty) {
+      return showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return const AlertDialog(
+                title: Text(
+                  'Similar games',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                content: SizedBox(
+                  height: 400,
+                  width: 300,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.sentiment_dissatisfied,
+                            color: Colors.grey,
+                            size: 50,
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            'There are no similar games for this game, sorry!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    }
+
+    for (var similarGame in similarGames) {
+      String name = similarGame['name'];
+      if (name[name.length - 1] == ')' && name.length >= 7) {
+        name = name.substring(0, name.length - 7);
+      }
+      recommendations.add(
+        ListTile(
+          leading: const Icon(Icons.videogame_asset),
+          title: Text(
+            similarGame['name'],
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          trailing: GestureDetector(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: name));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${name} copied to clipboard')),
+              );
+            },
+            child: const Icon(Icons.copy), // Icon to indicate copying
+          ),
+        ),
+      );
+    }
+
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return AlertDialog(
+                title: const Text('Similar games'),
+                content: SizedBox(
+                  height: 400,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: recommendations,
                     ),
                   ),
                 ),

@@ -8,6 +8,7 @@ class Game extends HiveObject {
   int mediaId;
   int id;
   int parentGameId;
+  int IGDBId;
   String OSMinimum;
   String OSRecommended;
   String CPUMinimum;
@@ -36,6 +37,7 @@ class Game extends HiveObject {
     this.id = -1,
     required this.mediaId,
     this.parentGameId = -1,
+    required this.IGDBId,
     required this.OSMinimum,
     required this.OSRecommended,
     required this.CPUMinimum,
@@ -313,6 +315,7 @@ class GameAdapter extends TypeAdapter<Game> {
       id: reader.readInt(),
       mediaId: reader.readInt(),
       parentGameId: reader.readInt(),
+      IGDBId: reader.readInt(),
       OSMinimum: reader.readString(),
       OSRecommended: reader.readString(),
       CPUMinimum: reader.readString(),
@@ -337,6 +340,7 @@ class GameAdapter extends TypeAdapter<Game> {
     writer.writeInt(obj.id);
     writer.writeInt(obj.mediaId);
     writer.writeInt(obj.parentGameId);
+    writer.writeInt(obj.IGDBId);
     writer.writeString(obj.OSMinimum);
     writer.writeString(obj.OSRecommended);
     writer.writeString(obj.CPUMinimum);

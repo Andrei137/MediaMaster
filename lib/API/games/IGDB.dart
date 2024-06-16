@@ -18,6 +18,7 @@ class IGDB implements Service {
   List<dynamic> _developers = [];
   List<String> _franchises = [];
   List<String> _genres = [];
+  List<dynamic> _platforms = [];
   List<dynamic> _publishers = [];
   List<String> _websites = [];
 
@@ -38,6 +39,7 @@ class IGDB implements Service {
     _developers = [];
     _franchises = [];
     _genres = [];
+    _platforms = [];
     _publishers = [];
     _websites = [];
   }
@@ -157,11 +159,13 @@ class IGDB implements Service {
         for (int i = 0; i < _developers.length; ++i) {
           if (_developers[i] is int) {
             _developers.removeAt(i);
+            i--;
           }
         }
         for (int i = 0; i < _publishers.length; ++i) {
           if (_publishers[i] is int) {
             _publishers.removeAt(i);
+            i--;
           }
         }
       }
@@ -234,6 +238,25 @@ class IGDB implements Service {
     } catch (e) {}
   }
 
+  Future<void> _getPlatforms(
+      String accessToken, Map<String, dynamic> game) async {
+    try {
+      final url = Uri.parse("https://api.igdb.com/v4/platforms");
+      final headers = {
+        "Client-ID": clientIdIGDB,
+        "Authorization": "Bearer $accessToken",
+      };
+      final body = "fields name; where id = ${_formatIds(game, 'platforms')};";
+      final response = await http.post(url, headers: headers, body: body);
+      if (response.statusCode == 200) {
+        var platforms = jsonDecode(response.body);
+        for (int i = 0; i < platforms.length; ++i) {
+          _platforms.add(utf8.decode(platforms[i]['name'].runes.toList()));
+        }
+      }
+    } catch (e) {}
+  }
+
   Future<void> _getWebsites(
       String accessToken, Map<String, dynamic> game) async {
     try {
@@ -285,7 +308,7 @@ class IGDB implements Service {
         "Authorization": "Bearer $accessToken",
       };
       final body =
-          "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,rating,remakes,remasters,similar_games,summary,url,websites; where parent_game = (${ids.join(", ")});";
+          "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,platforms,rating,remakes,remasters,similar_games,summary,url,websites; where parent_game = (${ids.join(", ")});";
       return http.post(url, headers: headers, body: body).then((response) {
         if (response.statusCode == 200) {
           var dlcsRemakesRemasters = jsonDecode(response.body);
@@ -311,7 +334,7 @@ class IGDB implements Service {
       // version_parent = null -> no editions
       // parent_game = null -> no DLCs, remakes, bundles
       final body =
-          "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,rating,remakes,remasters,summary,url,websites; search \"$gameName\"; where version_parent = null & parent_game = null;";
+          "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,platforms,rating,remakes,remasters,summary,url,websites; search \"$gameName\"; where version_parent = null & parent_game = null;";
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         var games = jsonDecode(response.body);
@@ -364,12 +387,15 @@ class IGDB implements Service {
     final response = await http.post(url, headers: headers, body: body);
     if (response.statusCode == 200) {
       var games = jsonDecode(response.body)[0]['similar_games'];
+      if (games == null) {
+        return [];
+      }
       List<dynamic> ids = [];
       for (int i = 0; i < games.length; ++i) {
         ids.add(games[i].toString());
       }
       final similarGamesBody =
-          "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,rating,remakes,remasters,summary,url,websites; where parent_game = (${ids.join(", ")});";
+          "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,platforms,rating,remakes,remasters,summary,url,websites; where id = (${ids.join(",")}) & version_parent = null & parent_game = null;";
       final similarGamesResponse =
           await http.post(url, headers: headers, body: similarGamesBody);
       if (similarGamesResponse.statusCode == 200) {
@@ -437,6 +463,10 @@ class IGDB implements Service {
       game['developers'] = _developers;
       game['publishers'] = _publishers;
       game.remove('involved_companies');
+    }
+    if (game['platforms'] != null) {
+      await _getPlatforms(_accessToken, game);
+      game['platforms'] = _platforms;
     }
     if (game['rating'] != null) {
       game['user_rating'] = (game['rating']).round();
