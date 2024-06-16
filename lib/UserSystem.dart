@@ -30,20 +30,17 @@ class UserSystem {
   Set<Note> currentUserNotes = {};
 
   void init() {
-    var users = Hive.box<User>('users');
-    if(users.isEmpty) {
-      currentUser = User(
-        username: "username",
-        email: "email",
-        hashSalt: "hashSalt",
-        password: "password",
-      );
-      users.add(currentUser!);
-    }
-    else {
-      // TODO: Change here to allow login/logout and whatever else from AUTH
-      currentUser = users.getAt(0)!;
-    }
+    currentUser = null;
+  }
+
+  void login(User user) {
+    currentUser = user;
+    loadUserContent();
+  }
+
+  void logout() {
+    currentUser = null;
+    clearUserData();
   }
 
   void clearUserData() {
@@ -72,27 +69,27 @@ class UserSystem {
   Future<void> loadUserContent() async {
     clearUserData();
 
-    if(currentUser != null) {
+    if (currentUser != null) {
       currentUserGenres = Set.from(
         Hive.box<MediaUserGenre>('media-user-genres')
-          .values
-          .where((mug) => mug.user == currentUser),
+            .values
+            .where((mug) => mug.user == currentUser),
       );
       currentUserMedia = Set.from(
         Hive.box<MediaUser>('media-users')
-          .values
-          .where((mu) => mu.user == currentUser),
+            .values
+            .where((mu) => mu.user == currentUser),
       );
       currentUserNotes = Set.from(
         Hive.box<Note>('notes')
-        .values
-        .where((note) => note.user == currentUser),
+            .values
+            .where((note) => note.user == currentUser),
       );
       currentUserTags = Set.from(
         Hive.box<MediaUserTag>('media-user-tags')
-          .values
-          .where((mut) => mut.user == currentUser),
-        );
+            .values
+            .where((mut) => mut.user == currentUser),
+      );
     }
   }
 }

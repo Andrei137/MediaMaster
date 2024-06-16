@@ -22,22 +22,22 @@ class User extends HiveObject {
       required this.email,
       required this.hashSalt,
       required this.password}) {
-        if(id == -1) {
-          id = nextId;
-        }
-        if(id >= nextId) {
-          nextId = id + 1;
-        }
-      }
+    if (id == -1) {
+      id = nextId;
+    }
+    if (id >= nextId) {
+      nextId = id + 1;
+    }
+  }
 
   @override
-  bool operator==(Object other) {
-    if(runtimeType != other.runtimeType) {
+  bool operator ==(Object other) {
+    if (runtimeType != other.runtimeType) {
       return false;
     }
     return id == (other as User).id;
   }
-  
+
   @override
   int get hashCode => id;
 }
