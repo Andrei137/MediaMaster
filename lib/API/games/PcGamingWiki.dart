@@ -118,4 +118,9 @@ class PcGamingWiki implements Service {
   Future<Map<String, dynamic>> getInfo(Map<String, dynamic> game) async {
     return instance._searchGame(game['name']);
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecommendations(int gameId) async {
+    return [];
+  }
 }

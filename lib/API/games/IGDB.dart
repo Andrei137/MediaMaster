@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -271,7 +272,7 @@ class IGDB implements Service {
   }
 
 
-  Future<List<dynamic>> _getAdditionalGames(accessToken, games) async {
+  Future<List<dynamic>> _getAdditionalGames(String accessToken, List<dynamic> games) async {
     try {
       List<dynamic> ids = [];
       for (int i = 0; i < games.length; ++i) {
@@ -311,7 +312,7 @@ class IGDB implements Service {
       // version_parent = null -> no editions
       // parent_game = null -> no DLCs, remakes, bundles
       final body =
-          "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,rating,remakes,remasters,similar_games,summary,url,websites; search \"$gameName\"; where version_parent = null & parent_game = null;";
+          "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,rating,remakes,remasters,summary,url,websites; search \"$gameName\"; where version_parent = null & parent_game = null;";
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         var games = jsonDecode(response.body);
@@ -346,7 +347,50 @@ class IGDB implements Service {
     }
   }
 
-  Future<Map<String, dynamic>> editGame(Map<String, dynamic> game) async {
+  Future<List<Map<String, dynamic>>> _getSimilarGames(int gameId) async {
+    _accessToken = await _getAccessToken();
+
+    final url = Uri.parse("https://api.igdb.com/v4/games");
+    final headers = {
+      "Client-ID": clientIdIGDB,
+      "Authorization": "Bearer $_accessToken",
+    };
+    final body = "fields similar_games; where id = ${gameId};";
+    final response = await http.post(url, headers: headers, body: body);
+    if (response.statusCode == 200) {
+      var games = jsonDecode(response.body)[0]['similar_games'];
+      List<dynamic> ids = [];
+      for (int i = 0; i < games.length; ++i) {
+        ids.add(games[i].toString());
+      }
+      final similarGamesBody = "fields id,aggregated_rating,artworks,collection,collections,cover,dlcs,first_release_date,franchise,genres,involved_companies,name,rating,remakes,remasters,summary,url,websites; where parent_game = (${ids.join(", ")});";
+      final similarGamesResponse = await http.post(url, headers: headers, body: similarGamesBody);
+      if (similarGamesResponse.statusCode == 200) {
+        games = jsonDecode(similarGamesResponse.body);
+        for (int i = 0; i < games.length; ++i) {
+          games[i]['name'] = utf8.decode(games[i]['name'].runes.toList());
+          if (games[i]['first_release_date'] != null) {
+            // Turn the Unix timestamp into a DateTime object
+            games[i]['first_release_date'] = DateTime.fromMillisecondsSinceEpoch(games[i]['first_release_date'] * 1000);
+
+            // Add the year to the game name
+            games[i]['name'] += " (${games[i]['first_release_date'].year})";
+
+            // Format the date as a string, removing the time
+            games[i]['first_release_date'] = games[i]['first_release_date'].toString().substring(0, 10);
+          }
+          if (games[i]['summary'] != null) {
+            games[i]['summary'] = utf8.decode(games[i]['summary'].runes.toList());
+          }
+        }
+        return List<Map<String, dynamic>>.from(games);
+      }
+
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>> _editGame(Map<String, dynamic> game) async {
     if (game['aggregated_rating'] != null) {
       game['critic_rating'] = (game['aggregated_rating']).round();
       game.remove('aggregated_rating');
@@ -402,6 +446,11 @@ class IGDB implements Service {
 
   @override
   Future<Map<String, dynamic>> getInfo(Map<String, dynamic> game) async {
-    return instance.editGame(game);
+    return instance._editGame(game);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecommendations(int gameId) async {
+    return instance._getSimilarGames(gameId);
   }
 }

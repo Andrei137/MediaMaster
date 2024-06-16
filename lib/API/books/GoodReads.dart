@@ -93,4 +93,9 @@ class GoodReads implements Service {
   Future<Map<String, dynamic>> getInfo(Map<String, dynamic> book) async {
     return instance._searchBook(book);
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecommendations(int bookId) async {
+    return [];
+  }
 }

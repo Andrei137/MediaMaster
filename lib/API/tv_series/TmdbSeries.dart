@@ -109,4 +109,9 @@ class TmdbSeries implements Service {
     }
     return series;
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecommendations(int seriesId) async {
+    return [];
+  }
 }

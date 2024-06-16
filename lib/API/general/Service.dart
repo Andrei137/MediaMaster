@@ -4,6 +4,10 @@ abstract class Service {
   }
 
   Future<Map<String, dynamic>> getInfo(Map<String, dynamic> item) async {
-    throw UnimplementedError('search method is not implemented');
+    throw UnimplementedError('getInfo method is not implemented');
+  }
+
+  Future<List<Map<String, dynamic>>> getRecommendations(int id) async {
+        throw UnimplementedError('getRecommendations method is not implemented');
   }
 }

@@ -146,4 +146,9 @@ class HowLongToBeat implements Service {
   Future<Map<String, dynamic>> getInfo(Map<String, dynamic> game) async {
     return instance._searchGame(game['link']);
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecommendations(int gameId) async {
+    return [];
+  }
 }

@@ -14,4 +14,8 @@ class ServiceHandler {
   static Future<Map<String, dynamic>> getInfo(Map<String, dynamic> item) {
     return _service?.getInfo(item) ?? Future.value({});
   }
+
+  static Future<List<Map<String, dynamic>>> getRecommendations(int id) async {
+    return _service?.getRecommendations(id) ?? Future.value([]);
+  }
 }

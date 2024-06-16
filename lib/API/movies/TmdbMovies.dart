@@ -75,7 +75,12 @@ class TmdbMovies implements Service {
   }
 
   @override
-  Future<Map<String, dynamic>> getInfo(Map<String, dynamic> book) async {
-    return book;
+  Future<Map<String, dynamic>> getInfo(Map<String, dynamic> movie) async {
+    return movie;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecommendations(int movieId) async {
+    return [];
   }
 }
