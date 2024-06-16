@@ -74,7 +74,7 @@ class Media extends HiveObject {
   }
 
   List<Publisher> get publishers {
-    List<Publisher> ans = List.empty();
+    List<Publisher> ans = List.empty(growable: true);
 
     for (var mp in Hive.box<MediaPublisher>('media-publishers').values) {
       if (mp.mediaId == id) {
@@ -91,7 +91,7 @@ class Media extends HiveObject {
     return Column(
       children: [
         Text(
-          'Publisher${pubs.length <= 1 ? "" : "s"}',
+          'Publisher${pubs.length <= 1 ? "" : "s"}:',
           style: const TextStyle(
             color: Colors.white,
           ),
@@ -108,7 +108,7 @@ class Media extends HiveObject {
   }
 
   List<Creator> get creators {
-    List<Creator> ans = List.empty();
+    List<Creator> ans = List.empty(growable: true);
 
     for (var mc in Hive.box<MediaCreator>('media-creators').values) {
       if (mc.mediaId == id) {
@@ -125,7 +125,7 @@ class Media extends HiveObject {
     return Column(
       children: [
         Text(
-          'Creator${crts.length <= 1 ? "" : "s"}',
+          'Creator${crts.length <= 1 ? "" : "s"}:',
           style: const TextStyle(
             color: Colors.white,
           ),
@@ -142,7 +142,7 @@ class Media extends HiveObject {
   }
 
   List<Platform> get platforms {
-    List<Platform> ans = List.empty();
+    List<Platform> ans = List.empty(growable: true);
 
     for (var mp in Hive.box<MediaPlatform>('media-platforms').values) {
       if (mp.mediaId == id) {
@@ -159,7 +159,7 @@ class Media extends HiveObject {
     return Column(
       children: [
         Text(
-          'Platform${plts.length <= 1 ? "" : "s"}',
+          'Platform${plts.length <= 1 ? "" : "s"}:',
           style: const TextStyle(
             color: Colors.white,
           ),

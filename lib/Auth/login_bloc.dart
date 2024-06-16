@@ -53,10 +53,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     if (event is LoginButtonPressed) {
       yield LoginLoading();
       try {
-        await Future.delayed(const Duration(seconds: 2));
+        await Future.delayed(const Duration(seconds: 1));
         List<Object> list = event.props;
         checkUser(list[1].toString(), list[2].toString());
         yield LoginSuccess();
+        Navigator.pop(list[0] as BuildContext);
         Navigator.of(list[0] as BuildContext)
             .push(MaterialPageRoute(builder: (context) => const MyApp()));
       } catch (error) {

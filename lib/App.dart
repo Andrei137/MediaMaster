@@ -1,19 +1,26 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:http/http.dart' as http;
 import 'package:mediamaster/Models/note.dart';
 import 'package:pair/pair.dart';
-import 'Utils.dart';
+import 'package:flutter/services.dart';
+import 'dart:async';
+import 'API/general/ServiceHandler.dart';
+import 'API/general/ServiceBuilder.dart';
 import 'Main.dart';
 
 import 'Models/game.dart';
 import 'Models/genre.dart';
+import 'Models/publisher.dart';
+import 'Models/platform.dart';
+import 'Models/creator.dart';
+import 'Models/tag.dart';
 import 'Models/media.dart';
 import 'Models/media_user.dart';
 import 'Models/media_user_tag.dart';
 import 'Models/media_user_genre.dart';
-import 'Models/tag.dart';
+import 'Models/media_publisher.dart';
+import 'Models/media_platform.dart';
+import 'Models/media_creator.dart';
 
 import 'UserSystem.dart';
 
@@ -92,12 +99,11 @@ class MyAppState extends State<MyApp> {
   late Box<Tag> tags;
   late Box<Genre> genres;
 
-  // Placeholder image URL
-  static const String placeholderImageUrl =
-      //'https://uncensoredtactical.com/wp-content/uploads/2021/04/Placeholder-1920x1080-1.jpg';
-      'https://wallpaperaccess.com/full/5341085.jpg';
-  static const String placeholderCoverUrl =
-      'https://www.pcgamesarchive.com/wp-content/uploads/2021/07/Hollow-Knight-cover.jpg';
+  // Image & Cover URL
+  static String imageUrl =
+      'https://wallpaperaccess.com/full/5341085.jpg'; // placeholder
+  static String coverUrl =
+      'https://www.pcgamesarchive.com/wp-content/uploads/2021/07/Hollow-Knight-cover.jpg'; // placeholder
 
   @override
   void initState() {
@@ -172,6 +178,7 @@ class MyAppState extends State<MyApp> {
           game.media.originalName.toLowerCase().contains(filterQuery)) {
         listTiles.add(
           ListTile(
+            leading: Icon(Icons.videogame_asset),
             title: Text(game.media.originalName),
             onTap: () {
               setState(() {
@@ -286,8 +293,7 @@ class MyAppState extends State<MyApp> {
           IconButton(
               onPressed: () {
                 UserSystem().logout();
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) => Home()));
+                Navigator.pop(context);
               },
               icon: const Icon(Icons.logout),
               tooltip: 'Log out')
@@ -349,15 +355,6 @@ class MyAppState extends State<MyApp> {
           Expanded(
             flex: 10,
             child: Container(
-              decoration:
-                  const /*We currently don't have "backgroundImage", thus the following is const. Remove const when we add the image*/ BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage(
-                      // gameBox.isNotEmpty ? gameBox.getAt(selectedGameIndex)!.backgroundImage : placeholderImageUrl
-                      placeholderImageUrl),
-                  fit: BoxFit.cover,
-                ),
-              ),
               child: _displayGame(UserSystem().getUserGames().isNotEmpty
                   ? UserSystem().getUserGames()[selectedGameIndex]
                   : null),
@@ -397,7 +394,9 @@ class MyAppState extends State<MyApp> {
                           onPressed: () async {
                             String query = searchController.text;
                             if (query.isNotEmpty) {
-                              searchResults = await _searchGame(query);
+                              ServiceBuilder.setIgdb();
+                              searchResults =
+                                  await ServiceHandler.getOptions(query);
                               setState(() {
                                 noSearch = searchResults
                                     .isEmpty; // Update noSearch flag
@@ -414,7 +413,7 @@ class MyAppState extends State<MyApp> {
                             children: [
                               const SizedBox(height: 2),
                               ...searchResults.map((result) {
-                                String gameName = result['title'];
+                                String gameName = result['name'];
 
                                 if (gameAlreadyInLibrary(gameName)) {
                                   return ListTile(
@@ -426,8 +425,7 @@ class MyAppState extends State<MyApp> {
                                       ),
                                     ),
                                     onTap: () {
-                                      // getInfo(gameIndex)
-                                      _addGame(gameName);
+                                      _addGame(result);
                                       Navigator.of(context).pop();
                                     },
                                   );
@@ -435,7 +433,7 @@ class MyAppState extends State<MyApp> {
                                   return ListTile(
                                     title: Text(gameName),
                                     onTap: () {
-                                      _addGame(gameName);
+                                      _addGame(result);
                                       Navigator.of(context).pop();
                                     },
                                   );
@@ -453,25 +451,6 @@ class MyAppState extends State<MyApp> {
         );
       },
     );
-  }
-
-  Future<List<dynamic>> _searchGame(String query) async {
-    final String url =
-        'https://www.pcgamingwiki.com/w/api.php?action=query&format=json&list=search&srsearch=${Utils.httpify(query)}';
-
-    try {
-      final http.Response response = await http.get(Uri.parse(url));
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        return data['query']['search'];
-      } else {
-        throw Exception('Failed to search for game: ${response.statusCode}');
-      }
-    } catch (error) {
-      print('Error searching game: $error');
-      return [];
-    }
   }
 
   Future<void> _showSortGamesDialog(BuildContext context) {
@@ -742,7 +721,7 @@ class MyAppState extends State<MyApp> {
                               ),
                             ],
                           ),
-                      ], // -------------------------------------------------------------------
+                      ],
                     ),
                   ),
                 ),
@@ -799,60 +778,278 @@ class MyAppState extends State<MyApp> {
     );
   }
 
-  Future<void> _addGame(String gameName) async {
+  Future<void> _addGame(Map<String, dynamic> result) async {
     if (UserSystem().currentUser == null) {
       return;
     }
 
-    Game? nullableGame = gameAlreadyInDB(gameName);
+    var selectedGame = await ServiceHandler.getInfo(result);
+    String name = selectedGame['name'];
+
+    if (name[name.length - 1] == ')' && name.length >= 7) {
+      name = name.substring(0, name.length - 7);
+    }
+
+    Game? nullableGame = gameAlreadyInDB(name);
+
+    // Get information from PCGamingWiki
+    ServiceBuilder.setPcGamingWiki();
+    var optionsPCGW = await ServiceHandler.getOptions(name);
+    Map<String, dynamic> resultPCGW = {};
+    if (optionsPCGW.isNotEmpty) {
+      // This is kind of a hack but we will do it legit in the future
+      resultPCGW = await ServiceHandler.getInfo(optionsPCGW[0]);
+    }
+    Map<String, dynamic> answersPCGW = {};
+    if (resultPCGW.containsKey('windows')) {
+      if (resultPCGW['windows'].containsKey('OS')) {
+        answersPCGW['OSMinimum'] = resultPCGW['windows']['OS']['minimum']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+        answersPCGW['OSRecommended'] = resultPCGW['windows']['OS']
+                ['recommended']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+      }
+      if (resultPCGW['windows'].containsKey('CPU')) {
+        answersPCGW['CPUMinimum'] = resultPCGW['windows']['CPU']['minimum']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+        answersPCGW['CPURecommended'] = resultPCGW['windows']['CPU']
+                ['recommended']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+      }
+      if (resultPCGW['windows'].containsKey('RAM')) {
+        answersPCGW['RAMMinimum'] = resultPCGW['windows']['RAM']['minimum']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+        answersPCGW['RAMRecommended'] = resultPCGW['windows']['RAM']
+                ['recommended']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+      }
+      if (resultPCGW['windows'].containsKey('HDD')) {
+        answersPCGW['HDDMinimum'] = resultPCGW['windows']['HDD']['minimum']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+        answersPCGW['HDDRecommended'] = resultPCGW['windows']['HDD']
+                ['recommended']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+      }
+      if (resultPCGW['windows'].containsKey('GPU')) {
+        answersPCGW['GPUMinimum'] = resultPCGW['windows']['GPU']['minimum']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+        answersPCGW['GPURecommended'] = resultPCGW['windows']['GPU']
+                ['recommended']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+      }
+    }
+
+    // Get information from HLTB
+    ServiceBuilder.setHowLongToBeat();
+    var optionsHLTB = await ServiceHandler.getOptions(name);
+    Map<String, dynamic> resultHLTB = {};
+    if (optionsHLTB.isNotEmpty) {
+      // This is kind of a hack but we will do it legit in the future
+      resultHLTB = await ServiceHandler.getInfo(optionsHLTB[0]);
+    }
+    Map<String, dynamic> answersHLTB = {};
+    if (resultHLTB.containsKey('Main Story')) {
+      answersHLTB['Main Story'] =
+          (double.parse(resultHLTB['Main Story'].split(' Hours')[0]) * 3600)
+              .round();
+    }
+    if (resultHLTB.containsKey('Main + Sides')) {
+      answersHLTB['Main + Sides'] =
+          (double.parse(resultHLTB['Main + Sides'].split(' Hours')[0]) * 3600)
+              .round();
+    }
+    if (resultHLTB.containsKey('Completionist')) {
+      answersHLTB['Completionist'] =
+          (double.parse(resultHLTB['Completionist'].split(' Hours')[0]) * 3600)
+              .round();
+    }
+    if (resultHLTB.containsKey('All Styles')) {
+      answersHLTB['All Styles'] =
+          (double.parse(resultHLTB['All Styles'].split(' Hours')[0]) * 3600)
+              .round();
+    }
+    if (resultHLTB.containsKey('Co-Op')) {
+      answersHLTB['Co-Op'] =
+          (double.parse(resultHLTB['Co-Op'].split(' Hours')[0]) * 3600).round();
+    }
+    if (resultHLTB.containsKey('Vs.')) {
+      answersHLTB['Vs.'] =
+          (double.parse(resultHLTB['Vs.'].split(' Hours')[0]) * 3600).round();
+    }
 
     if (nullableGame == null) {
       Media media = Media(
-        originalName: gameName,
-        description: "Add parameter/call to API for description here.",
+        originalName: name,
+        description:
+            selectedGame['summary'] ?? "There is no summary for this game.",
         releaseDate:
-            DateTime.now() /*Add parameter/call to API for release date here.*/,
-        criticScore: -1 /*Add parameter/call to API for critic score here.*/,
+            DateTime.now(), //selectedGame['first_release_date'] as DateTime,
+        criticScore: selectedGame['critic_rating'] != 0
+            ? selectedGame['critic_rating']
+            : 0,
         communityScore:
-            -1 /*Add parameter/call to API for comunity score here.*/,
+            selectedGame['user_rating'] != 0 ? selectedGame['user_rating'] : 0,
         mediaType: "Game",
       );
       Game newGame = Game(
         mediaId: media.id,
         parentGameId:
-            -1 /*Add parameter/call to API to check if this is a DLC*/,
-        OSMinimum:
-            "Minimum OS not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        OSRecommended:
-            "Recommended OS not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        CPUMinimum:
-            "Minimum CPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        CPURecommended:
-            "Recommended CPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        RAMMinimum:
-            "Minimum RAM not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        RAMRecommended:
-            "Recommended RAM not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        HDDMinimum:
-            "Minimum HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        HDDRecommended:
-            "Recommended HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        GPUMinimum:
-            "Minimum GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        GPURecommended:
-            "Recommended GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        HLTBMainInSeconds:
-            3720 /*For testing purposes*/ /*Add parameter/call to HLTB service API*/,
-        HLTBMainSideInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBCompletionistInSeconds:
-            -1 /*Add parameter/call to HLTB service API*/,
-        HLTBAllStylesInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBSoloInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBCoopInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBVersusInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBSingleplayerInSeconds:
-            -1 /*Add parameter/call to HLTB service API*/,
+            -1 /*TODO in the next semester: Add parameter/call to API to check if this is a DLC*/,
+        IGDBId: selectedGame['id'],
+        OSMinimum: answersPCGW.containsKey('OSMinimum') &&
+                answersPCGW['OSMinimum'] != null
+            ? answersPCGW['OSMinimum']
+            : "N/A",
+        OSRecommended: answersPCGW.containsKey('OSRecommended') &&
+                answersPCGW['OSRecommended'] != null
+            ? answersPCGW['OSRecommended']
+            : "N/A",
+        CPUMinimum: answersPCGW.containsKey('CPUMinimum') &&
+                answersPCGW['CPUMinimum'] != null
+            ? answersPCGW['CPUMinimum']
+            : "N/A",
+        CPURecommended: answersPCGW.containsKey('CPURecommended') &&
+                answersPCGW['CPURecommended'] != null
+            ? answersPCGW['CPURecommended']
+            : "N/A",
+        RAMMinimum: answersPCGW.containsKey('RAMMinimum') &&
+                answersPCGW['RAMMinimum'] != null
+            ? answersPCGW['RAMMinimum']
+            : "N/A",
+        RAMRecommended: answersPCGW.containsKey('RAMRecommended') &&
+                answersPCGW['RAMRecommended'] != null
+            ? answersPCGW['RAMRecommended']
+            : "N/A",
+        HDDMinimum: answersPCGW.containsKey('HDDMinimum') &&
+                answersPCGW['HDDMinimum'] != null
+            ? answersPCGW['HDDMinimum']
+            : "N/A",
+        HDDRecommended: answersPCGW.containsKey('HDDRecommended') &&
+                answersPCGW['HDDRecommended'] != null
+            ? answersPCGW['HDDRecommended']
+            : "N/A",
+        GPUMinimum: answersPCGW.containsKey('GPUMinimum') &&
+                answersPCGW['GPUMinimum'] != null
+            ? answersPCGW['GPUMinimum']
+            : "N/A",
+        GPURecommended: answersPCGW.containsKey('GPURecommended') &&
+                answersPCGW['GPURecommended'] != null
+            ? answersPCGW['GPURecommended']
+            : "N/A",
+        HLTBMainInSeconds: answersHLTB.containsKey('Main Story')
+            ? answersHLTB['Main Story']
+            : -1,
+        HLTBMainSideInSeconds: answersHLTB.containsKey('Main + Sides')
+            ? answersHLTB['Main + Sides']
+            : -1,
+        HLTBCompletionistInSeconds: answersHLTB.containsKey('Completionist')
+            ? answersHLTB['Completionist']
+            : -1,
+        HLTBAllStylesInSeconds: answersHLTB.containsKey('All Styles')
+            ? answersHLTB['All Styles']
+            : -1,
+        HLTBCoopInSeconds:
+            answersHLTB.containsKey('Co-Op') ? answersHLTB['Co-Op'] : -1,
+        HLTBVersusInSeconds:
+            answersHLTB.containsKey('Vs.') ? answersHLTB['Vs.'] : -1,
       );
+
+      // get the publishers of the game
+      List<dynamic> gamePublishers = selectedGame['publishers'];
+      List<Publisher> newPublishers = List.empty(growable: true);
+      Box<Publisher> publishers = Hive.box<Publisher>('publishers');
+      Box<MediaPublisher> mediaPublishers =
+          Hive.box<MediaPublisher>('media-publishers');
+
+      for (dynamic publisher in gamePublishers) {
+        bool check = true;
+        for (int i = 0; i < publishers.length; i++) {
+          // if the creator exists in the DB, add a new entry to MediaPublisher
+          if (publishers.getAt(i)!.name == publisher.toString()) {
+            check = false;
+            mediaPublishers.add(MediaPublisher(
+              mediaId: media.id,
+              publisherId: publishers.getAt(i)!.id,
+            ));
+          }
+        }
+        // add the new creator to the newPublishers list in order to add it to the DB later
+        if (check == true) {
+          newPublishers.add(Publisher(name: publisher.toString()));
+        }
+      }
+
+      // add the new creators to the DB and add new entries to MediaPublisher
+      for (Publisher publisher in newPublishers) {
+        publishers.add(publisher);
+        mediaPublishers
+            .add(MediaPublisher(mediaId: media.id, publisherId: publisher.id));
+      }
+
+      // get the developers of the game
+      List<dynamic> gameCreators = selectedGame['developers'];
+      List<Creator> newCreators = List.empty(growable: true);
+      Box<Creator> creators = Hive.box<Creator>('creators');
+      Box<MediaCreator> mediaCreators =
+          Hive.box<MediaCreator>('media-creators');
+
+      for (dynamic creator in gameCreators) {
+        bool check = true;
+        for (int i = 0; i < creators.length; i++) {
+          // if the creator exists in the DB, add a new entry to MediaCreator
+          if (creators.getAt(i)!.name == creator.toString()) {
+            check = false;
+            mediaCreators.add(MediaCreator(
+              mediaId: media.id,
+              creatorId: creators.getAt(i)!.id,
+            ));
+          }
+        }
+        // add the new creator to the newCreators list in order to add it to the DB later
+        if (check == true) {
+          newCreators.add(Creator(name: creator.toString()));
+        }
+      }
+
+      // add the new creators to the DB and add new entries to MediaCreator
+      for (Creator creator in newCreators) {
+        creators.add(creator);
+        mediaCreators
+            .add(MediaCreator(mediaId: media.id, creatorId: creator.id));
+      }
+
+      // get the platforms of the game
+      List<dynamic> gamePlatforms = selectedGame['platforms'];
+      List<Platform> newPlatforms = List.empty(growable: true);
+      Box<Platform> platforms = Hive.box<Platform>('platforms');
+      Box<MediaPlatform> mediaPlatforms =
+          Hive.box<MediaPlatform>('media-platforms');
+
+      for (dynamic platform in gamePlatforms) {
+        bool check = true;
+        for (int i = 0; i < platforms.length; i++) {
+          // if the creator exists in the DB, add a new entry to MediaPlatform
+          if (platforms.getAt(i)!.name == platform.toString()) {
+            check = false;
+            mediaPlatforms.add(MediaPlatform(
+              mediaId: media.id,
+              platformId: platforms.getAt(i)!.id,
+            ));
+          }
+        }
+        // add the new creator to the newPlatformss list in order to add it to the DB later
+        if (check == true) {
+          newPlatforms.add(Platform(name: platform.toString()));
+        }
+      }
+
+      // add the new creators to the DB and add new entries to MediaPublisher
+      for (Platform platform in newPlatforms) {
+        platforms.add(platform);
+        mediaPlatforms
+            .add(MediaPlatform(mediaId: media.id, platformId: platform.id));
+      }
+
       await Hive.box<Media>('media').add(media);
       await Hive.box<Game>('games').add(newGame);
       nullableGame = newGame;
@@ -867,12 +1064,12 @@ class MyAppState extends State<MyApp> {
         name: game.media.originalName,
         userScore: -1,
         addedDate: DateTime.now(),
-        coverImage: "placeholder.png" /*Add a basic cover image*/,
+        coverImage: selectedGame["cover"],
         status: "Plan To Play",
         series:
             game.media.originalName /*Add parameter/call to game series API*/,
-        icon: "placeholder.png" /*Add a basic cover image*/,
-        backgroundImage: "placeholder.png" /*Add a basic cover image*/,
+        icon: selectedGame["cover"],
+        backgroundImage: selectedGame["artworks"][0],
         lastInteracted: DateTime.now(),
       );
 
@@ -893,15 +1090,25 @@ class MyAppState extends State<MyApp> {
           ));
     }
 
+    Box<MediaUser> mediaUsers = Hive.box<MediaUser>('media-users');
+    for (int i = 0; i < mediaUsers.length; i++) {
+      if (mediaUsers.getAt(i)!.mediaId == game.mediaId &&
+          mediaUsers.getAt(i)!.userId == UserSystem().currentUser!.id) {
+        imageUrl = 'https:${mediaUsers.getAt(i)!.backgroundImage}';
+        coverUrl = 'https:${mediaUsers.getAt(i)!.coverImage}';
+        break;
+      }
+    }
+
     return SizedBox.expand(
       child: Container(
         padding: const EdgeInsets.only(
           top: 200,
         ),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: DecorationImage(
             image: NetworkImage(
-              placeholderImageUrl,
+              imageUrl,
             ),
             alignment: Alignment.topCenter,
           ),
@@ -914,7 +1121,7 @@ class MyAppState extends State<MyApp> {
             child: Column(
               children: [
                 Center(
-                  // Game name; TODO: Remove this or move it or something
+                  // Game name;
                   child: Text(
                     game.media.originalName,
                     style: const TextStyle(color: Colors.white, fontSize: 24.0),
@@ -986,7 +1193,7 @@ class MyAppState extends State<MyApp> {
                       margin: const EdgeInsets.all(10),
                       child: IconButton(
                         onPressed: () {
-                          runSysCheck(game);
+                          _showSysCheck(game);
                         },
                         icon: const Icon(
                           Icons.monitor,
@@ -1015,6 +1222,24 @@ class MyAppState extends State<MyApp> {
                         ),
                       ),
                     ),
+                    Container(
+                      // Settings button
+                      margin: const EdgeInsets.all(10),
+                      child: TextButton(
+                        onPressed: () {
+                          _showGameRecommendationsDialog(game);
+                        },
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all(
+                              const Color.fromARGB(255, 32, 32, 32)),
+                          foregroundColor:
+                              MaterialStateProperty.all(Colors.white),
+                          overlayColor: MaterialStateProperty.all(
+                              const Color.fromARGB(255, 32, 32, 32)),
+                        ),
+                        child: const Text('Similar games'),
+                      ),
+                    ),
                   ],
                 ),
                 Row(
@@ -1026,10 +1251,9 @@ class MyAppState extends State<MyApp> {
                         margin: const EdgeInsets.all(
                           20,
                         ),
-                        child: const Image(
+                        child: Image(
                           image: NetworkImage(
-                            // TODO: Add link to cover image
-                            placeholderCoverUrl,
+                            coverUrl,
                           ),
                         ),
                       ),
@@ -1092,8 +1316,16 @@ class MyAppState extends State<MyApp> {
     );
   }
 
-  void runSysCheck(Game game) {
-    // TODO: This function gets invoked by the system check button. For now, until we integrate some way of checking the system capabilities it will do nothing
+  Future<void> _showSysCheck(Game game) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('System requirements'),
+          content: game.renderPCGW(),
+        );
+      },
+    );
   }
 
   Future<void> _showGameSettingsDialog(Game game) {
@@ -1229,6 +1461,105 @@ class MyAppState extends State<MyApp> {
                             ],
                           ),
                       ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        });
+  }
+
+  Future<void> _showGameRecommendationsDialog(Game game) async {
+    void resetState() {
+      setState(() {});
+    }
+
+    ServiceBuilder.setIgdb();
+    var similarGames = await ServiceHandler.getRecommendations(game.IGDBId);
+    List<Widget> recommendations = [];
+
+    if (similarGames.isEmpty) {
+      return showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return const AlertDialog(
+                title: Text(
+                  'Similar games',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                content: SizedBox(
+                  height: 400,
+                  width: 300,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.sentiment_dissatisfied,
+                            color: Colors.grey,
+                            size: 50,
+                          ),
+                          SizedBox(height: 20),
+                          Text(
+                            'There are no similar games for this game, sorry!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    }
+
+    for (var similarGame in similarGames) {
+      String name = similarGame['name'];
+      if (name[name.length - 1] == ')' && name.length >= 7) {
+        name = name.substring(0, name.length - 7);
+      }
+      recommendations.add(
+        ListTile(
+          leading: const Icon(Icons.videogame_asset),
+          title: Text(
+            similarGame['name'],
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          trailing: GestureDetector(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: name));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${name} copied to clipboard')),
+              );
+            },
+            child: const Icon(Icons.copy), // Icon to indicate copying
+          ),
+        ),
+      );
+    }
+
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return AlertDialog(
+                title: const Text('Similar games'),
+                content: SizedBox(
+                  height: 400,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: recommendations,
                     ),
                   ),
                 ),

@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:test/test.dart';
 import '../../lib/API/general/ServiceHandler.dart';
 import '../../lib/API/general/ServiceBuilder.dart';
@@ -10,7 +9,12 @@ double getHours(String time) {
 
 void main() {
   group('HowLongToBeat', () {
-    final games = ['Hollow Knight', 'God of War', 'League of Legends', 'Minecraft']; 
+    final games = [
+      'Hollow Knight',
+      'God of War',
+      'League of Legends',
+      'Minecraft'
+    ];
 
     setUp(() {
       ServiceBuilder.setHowLongToBeat();
@@ -68,12 +72,12 @@ void main() {
     });
 
     test('getInfo for a game with no data', () async {
-      final options = await ServiceHandler.getOptions('Heroes of Myths - Warriors of Gods');
+      final options =
+          await ServiceHandler.getOptions('Heroes of Myths - Warriors of Gods');
       final game_info = await ServiceHandler.getInfo(options[0]);
 
       expect(game_info, isNotNull);
       expect(game_info, isEmpty);
     });
-
   });
 }
