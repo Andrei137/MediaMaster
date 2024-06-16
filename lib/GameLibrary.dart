@@ -24,6 +24,7 @@ import 'Models/wishlist.dart';
 
 import 'UserSystem.dart';
 import 'MyWishlist.dart';
+import 'Main.dart';
 
 class GameLibrary extends StatefulWidget {
   const GameLibrary({super.key});
@@ -314,6 +315,8 @@ class GameLibraryState extends State<GameLibrary> {
               onPressed: () {
                 UserSystem().logout();
                 Navigator.pop(context);
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const Home()));
               },
               icon: const Icon(Icons.logout),
               tooltip: 'Log out')

@@ -58,6 +58,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         checkUser(list[1].toString(), list[2].toString());
         yield LoginSuccess();
         Navigator.pop(list[0] as BuildContext);
+        Navigator.pop(list[0] as BuildContext);
         Navigator.of(list[0] as BuildContext)
             .push(MaterialPageRoute(builder: (context) => const GameLibrary()));
       } catch (error) {
