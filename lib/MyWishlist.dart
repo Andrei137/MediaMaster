@@ -6,32 +6,32 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'API/general/ServiceHandler.dart';
 import 'API/general/ServiceBuilder.dart';
-import 'Main.dart';
 
 import 'Models/game.dart';
 import 'Models/genre.dart';
-import 'Models/publisher.dart';
-import 'Models/platform.dart';
 import 'Models/creator.dart';
-import 'Models/tag.dart';
 import 'Models/media.dart';
-import 'Models/media_user.dart';
 import 'Models/media_user_tag.dart';
 import 'Models/media_user_genre.dart';
 import 'Models/media_publisher.dart';
 import 'Models/media_platform.dart';
 import 'Models/media_creator.dart';
+import 'Models/platform.dart';
+import 'Models/publisher.dart';
+import 'Models/tag.dart';
+import 'Models/wishlist.dart';
 
 import 'UserSystem.dart';
+import 'GameLibrary.dart';
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class MyWishlist extends StatefulWidget {
+  const MyWishlist({super.key});
 
   @override
-  MyAppState createState() => MyAppState();
+  MyWishlistState createState() => MyWishlistState();
 }
 
-class MyAppState extends State<MyApp> {
+class MyWishlistState extends State<MyWishlist> {
   int selectedGameIndex = 0;
   String filterQuery = "";
   TextEditingController searchController = TextEditingController();
@@ -113,10 +113,9 @@ class MyAppState extends State<MyApp> {
     genres = Hive.box<Genre>('genres');
   }
 
-  ListView mediaListBuilder(
-      BuildContext context, Box<MediaUser> _, Widget? __) {
+  ListView mediaListBuilder(BuildContext context, Box<Wishlist> _, Widget? __) {
     List<ListTile> listTiles = List.from([]);
-    List<Game> userGames = UserSystem().getUserGames();
+    List<Game> userGames = UserSystem().getUserWishlistGames();
     List<Pair<Game, int>> gamesIndices = List.from([]);
     Set<Genre> selectedGenres = {};
     Set<Tag> selectedTags = {};
@@ -178,7 +177,7 @@ class MyAppState extends State<MyApp> {
           game.media.originalName.toLowerCase().contains(filterQuery)) {
         listTiles.add(
           ListTile(
-            leading: Icon(Icons.videogame_asset),
+            leading: const Icon(Icons.videogame_asset),
             title: Text(game.media.originalName),
             onTap: () {
               setState(() {
@@ -213,6 +212,9 @@ class MyAppState extends State<MyApp> {
   }
 
   Game? gameAlreadyInDB(String gameName) {
+    if (gameName[gameName.length - 1] == ')' && gameName.length >= 7) {
+      gameName = gameName.substring(0, gameName.length - 7);
+    }
     Box<Game> games = Hive.box<Game>('games');
     for (int i = 0; i < games.length; ++i) {
       if (games.getAt(i)!.media.originalName == gameName) {
@@ -223,7 +225,23 @@ class MyAppState extends State<MyApp> {
     return null;
   }
 
+  bool gameAlreadyInWishlist(String gameName) {
+    if (gameName[gameName.length - 1] == ')' && gameName.length >= 7) {
+      gameName = gameName.substring(0, gameName.length - 7);
+    }
+    for (Wishlist w in UserSystem().getUserWishlist()) {
+      if (gameName == w.media.originalName) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   bool gameAlreadyInLibrary(String gameName) {
+    if (gameName[gameName.length - 1] == ')' && gameName.length >= 7) {
+      gameName = gameName.substring(0, gameName.length - 7);
+    }
     for (Game libgame in UserSystem().getUserGames()) {
       if (gameName == libgame.media.originalName) {
         return true;
@@ -264,7 +282,7 @@ class MyAppState extends State<MyApp> {
       },
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
-        hintText: "Search game in library",
+        hintText: "Search game in wishlist",
         suffixIcon: butonSearchReset,
       ),
     );
@@ -321,6 +339,20 @@ class MyAppState extends State<MyApp> {
                         icon: const Icon(Icons.filter_alt),
                         tooltip: 'Filter games',
                       ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => const GameLibrary()));
+                        },
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all<Color>(
+                              const Color.fromARGB(219, 10, 94, 87)),
+                          foregroundColor:
+                              MaterialStateProperty.all<Color>(Colors.white),
+                        ),
+                        child: const Text('Game library'),
+                      ),
                     ],
                   ),
                   Row(
@@ -331,7 +363,7 @@ class MyAppState extends State<MyApp> {
                             _showSearchGameDialog(context);
                           },
                           icon: const Icon(Icons.add_circle),
-                          tooltip: 'Add Game to Library',
+                          tooltip: 'Add Game to wishlist',
                         ),
                       ),
                       Expanded(
@@ -346,7 +378,7 @@ class MyAppState extends State<MyApp> {
                     //color: Colors.grey[200],
                     child: ValueListenableBuilder(
                       valueListenable:
-                          Hive.box<MediaUser>('media-users').listenable(),
+                          Hive.box<Wishlist>('wishlists').listenable(),
                       builder: mediaListBuilder,
                     ),
                   ),
@@ -355,8 +387,8 @@ class MyAppState extends State<MyApp> {
           Expanded(
             flex: 10,
             child: Container(
-              child: _displayGame(UserSystem().getUserGames().isNotEmpty
-                  ? UserSystem().getUserGames()[selectedGameIndex]
+              child: _displayGame(UserSystem().getUserWishlistGames().isNotEmpty
+                  ? UserSystem().getUserWishlistGames()[selectedGameIndex]
                   : null),
             ),
           ),
@@ -415,11 +447,25 @@ class MyAppState extends State<MyApp> {
                               ...searchResults.map((result) {
                                 String gameName = result['name'];
 
-                                if (gameAlreadyInLibrary(gameName)) {
+                                if (gameAlreadyInWishlist(gameName)) {
                                   return ListTile(
                                     title: Text(gameName),
                                     subtitle: const Text(
-                                      "Game is already in library",
+                                      "Game is already in wishlist.",
+                                      style: TextStyle(
+                                        color: Color.fromARGB(255, 255, 0, 0),
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      _addGame(result);
+                                      Navigator.of(context).pop();
+                                    },
+                                  );
+                                } else if (gameAlreadyInLibrary(gameName)) {
+                                  return ListTile(
+                                    title: Text(gameName),
+                                    subtitle: const Text(
+                                      "Game is already in library.",
                                       style: TextStyle(
                                         color: Color.fromARGB(255, 255, 0, 0),
                                       ),
@@ -745,8 +791,8 @@ class MyAppState extends State<MyApp> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete Game'),
-          content: const Text('Are you sure you want to delete this game?'),
+          title: const Text('Remove game from wishlist'),
+          content: const Text('Are you sure you want to remove this game?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -756,11 +802,11 @@ class MyAppState extends State<MyApp> {
             ),
             TextButton(
               onPressed: () {
-                Game gameToDelete = UserSystem().getUserGames()[index];
-                for (MediaUser mu in UserSystem().currentUserMedia) {
-                  if (mu.media == gameToDelete.media) {
-                    UserSystem().currentUserMedia.remove(mu);
-                    Hive.box<MediaUser>('media-users').delete(mu.key);
+                Game gameToDelete = UserSystem().getUserWishlistGames()[index];
+                for (Wishlist w in UserSystem().currentUserWishlist) {
+                  if (w.media == gameToDelete.media) {
+                    UserSystem().currentUserWishlist.remove(w);
+                    Hive.box<Wishlist>('wishlists').delete(w.key);
                     break;
                   }
                 }
@@ -1057,8 +1103,8 @@ class MyAppState extends State<MyApp> {
 
     Game game = nullableGame;
 
-    if (!gameAlreadyInLibrary(game.media.originalName)) {
-      MediaUser mu = MediaUser(
+    if (!gameAlreadyInWishlist(game.media.originalName)) {
+      Wishlist w = Wishlist(
         mediaId: game.mediaId,
         userId: UserSystem().currentUser!.id,
         name: game.media.originalName,
@@ -1073,8 +1119,8 @@ class MyAppState extends State<MyApp> {
         lastInteracted: DateTime.now(),
       );
 
-      UserSystem().currentUserMedia.add(mu);
-      await Hive.box<MediaUser>('media-users').add(mu);
+      UserSystem().currentUserWishlist.add(w);
+      await Hive.box<Wishlist>('wishlists').add(w);
     }
   }
 
@@ -1090,12 +1136,12 @@ class MyAppState extends State<MyApp> {
           ));
     }
 
-    Box<MediaUser> mediaUsers = Hive.box<MediaUser>('media-users');
-    for (int i = 0; i < mediaUsers.length; i++) {
-      if (mediaUsers.getAt(i)!.mediaId == game.mediaId &&
-          mediaUsers.getAt(i)!.userId == UserSystem().currentUser!.id) {
-        imageUrl = 'https:${mediaUsers.getAt(i)!.backgroundImage}';
-        coverUrl = 'https:${mediaUsers.getAt(i)!.coverImage}';
+    Box<Wishlist> items = Hive.box<Wishlist>('wishlists');
+    for (int i = 0; i < items.length; i++) {
+      if (items.getAt(i)!.mediaId == game.mediaId &&
+          items.getAt(i)!.userId == UserSystem().currentUser!.id) {
+        imageUrl = 'https:${items.getAt(i)!.backgroundImage}';
+        coverUrl = 'https:${items.getAt(i)!.coverImage}';
         break;
       }
     }
@@ -1127,6 +1173,15 @@ class MyAppState extends State<MyApp> {
                     style: const TextStyle(color: Colors.white, fontSize: 24.0),
                   ),
                 ),
+                if (gameAlreadyInLibrary(game.media.originalName))
+                  const Center(
+                    child: Text(
+                      "Game is already in library.",
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 255, 0, 0),
+                      ),
+                    ),
+                  ),
                 Row(
                   children: [
                     Container(
@@ -1678,8 +1733,8 @@ class MyAppState extends State<MyApp> {
       primary: false,
       children: [
         for (Note note in notes) renderStickyNote(note, -1),
-        renderStickyNote(
-            null, UserSystem().getUserGames()[selectedGameIndex].mediaId),
+        renderStickyNote(null,
+            UserSystem().getUserWishlistGames()[selectedGameIndex].mediaId),
       ],
     );
   }
