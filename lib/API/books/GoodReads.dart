@@ -31,14 +31,14 @@ class GoodReads implements Service {
         for (var book in document
             .querySelectorAll('tr[itemtype="http://schema.org/Book"]')) {
           final ratingText =
-              book.querySelector('span.minirating')?.text?.trim() ??
+              book.querySelector('span.minirating')?.text.trim() ??
                   'avg rating —';
 
           options.add({
-            'name': book.querySelector('a.bookTitle')?.text?.trim() ?? null,
+            'name': book.querySelector('a.bookTitle')?.text.trim(),
             'link':
                 'https://www.goodreads.com${book.querySelector('a.bookTitle')?.attributes['href'] ?? ""}',
-            'author': book.querySelector('a.authorName')?.text?.trim() ?? null,
+            'author': book.querySelector('a.authorName')?.text.trim(),
             'rating': ratingText.split('avg rating —')[0].trim(),
           });
         }
@@ -69,18 +69,16 @@ class GoodReads implements Service {
           'author': book['author'],
           'link': book['link'],
           'rating': book['rating'],
-          'numPages': pagesFormat?.text?.trim().split(' ')[0] ?? null,
+          'numPages': pagesFormat?.text.trim().split(' ')[0],
           'publicationInfo': document
-                  .querySelector('p[data-testid="publicationInfo"]')
-                  ?.text
-                  ?.trim()
-                  .split('First published ')
-                  ?.last ??
-              null,
-          'description':
-              document.querySelector('span.Formatted')?.text?.trim() ?? null,
-          'bookFormat': jsonData['bookFormat'] ?? null,
-          'language': jsonData['inLanguage'] ?? null
+              .querySelector('p[data-testid="publicationInfo"]')
+              ?.text
+              .trim()
+              .split('First published ')
+              .last,
+          'description': document.querySelector('span.Formatted')?.text.trim(),
+          'bookFormat': jsonData['bookFormat'],
+          'language': jsonData['inLanguage']
         };
       } else {
         return {};

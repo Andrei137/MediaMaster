@@ -294,22 +294,14 @@ class GameLibraryState extends State<GameLibrary> {
       appBar: AppBar(
         title: const Text('MediaMaster'),
         actions: [
-          IconButton(
-            onPressed: () {
-              _darkModeToggle(context);
-            },
-            icon: const Icon(Icons.dark_mode),
-            tooltip: 'Toggle dark mode',
-          ),
-          IconButton(
-            onPressed: () {
-              _showSettingsDialog(context);
-            },
-            icon: const Icon(Icons.settings),
-            tooltip: 'Settings',
-          ),
-          Text(
-            UserSystem().currentUser!.username,
+          TextButton(
+            onPressed: () {}, // TO DO: profile page
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all<Color>(
+                  const Color.fromARGB(219, 10, 94, 87)),
+              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+            ),
+            child: Text(UserSystem().currentUser!.username),
           ),
           IconButton(
               onPressed: () {
@@ -343,6 +335,13 @@ class GameLibraryState extends State<GameLibrary> {
                         },
                         icon: const Icon(Icons.filter_alt),
                         tooltip: 'Filter games',
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          _darkModeToggle(context);
+                        },
+                        icon: const Icon(Icons.dark_mode),
+                        tooltip: 'Toggle dark mode',
                       ),
                       TextButton(
                         onPressed: () {
@@ -783,10 +782,6 @@ class GameLibraryState extends State<GameLibrary> {
   }
 
   void _darkModeToggle(BuildContext context) {
-    // TODO: Implement this
-  }
-
-  void _showSettingsDialog(BuildContext context) {
     // TODO: Implement this
   }
 
