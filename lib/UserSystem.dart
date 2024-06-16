@@ -5,6 +5,7 @@ import 'Models/media.dart';
 import 'Models/media_user.dart';
 import 'Models/media_user_tag.dart';
 import 'Models/media_user_genre.dart';
+import 'Models/wishlist.dart';
 import 'Models/note.dart';
 import 'Models/user.dart';
 
@@ -27,6 +28,7 @@ class UserSystem {
   Set<MediaUser> currentUserMedia = {};
   Set<MediaUserTag> currentUserTags = {};
   Set<MediaUserGenre> currentUserGenres = {};
+  Set<Wishlist> currentUserWishlist = {};
   Set<Note> currentUserNotes = {};
 
   void init() {
@@ -48,6 +50,7 @@ class UserSystem {
     currentUserNotes.clear();
     currentUserMedia.clear();
     currentUserTags.clear();
+    currentUserWishlist.clear();
   }
 
   List<Game> getUserGames() {
@@ -60,6 +63,14 @@ class UserSystem {
 
   Set<MediaUserTag> getUserTags() {
     return currentUserTags;
+  }
+
+  Set<Wishlist> getUserWishlist() {
+    return currentUserWishlist;
+  }
+
+  List<Game> getUserWishlistGames() {
+    return List.from(currentUserWishlist.map((w) => w.media.media as Game));
   }
 
   Set<Note> getUserNotes(Media media) {
@@ -89,6 +100,11 @@ class UserSystem {
         Hive.box<MediaUserTag>('media-user-tags')
             .values
             .where((mut) => mut.user == currentUser),
+      );
+      currentUserWishlist = Set.from(
+        Hive.box<Wishlist>('wishlists')
+            .values
+            .where((w) => w.user == currentUser),
       );
     }
   }

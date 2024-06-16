@@ -6,12 +6,36 @@ class Wishlist extends HiveObject {
   // Hive fields
   int mediaId;
   int userId;
+  String name;
+  int userScore;
+  DateTime addedDate;
+  String coverImage;
+  String status;
+  String series;
+  String icon;
+  String backgroundImage;
+  DateTime lastInteracted;
+  int gameTime;
+  int bookReadPages;
 
   // For ease of use
   Media? _media;
   User? _user;
 
-  Wishlist({required this.mediaId, required this.userId});
+  Wishlist(
+      {required this.mediaId,
+      required this.userId,
+      required this.name,
+      required this.userScore,
+      required this.addedDate,
+      required this.coverImage,
+      required this.status,
+      required this.series,
+      required this.icon,
+      required this.backgroundImage,
+      required this.lastInteracted,
+      this.gameTime = 0,
+      this.bookReadPages = 0});
 
   @override
   bool operator ==(Object other) {
@@ -66,12 +90,34 @@ class WishlistAdapter extends TypeAdapter<Wishlist> {
     return Wishlist(
       mediaId: reader.readInt(),
       userId: reader.readInt(),
+      name: reader.readString(),
+      userScore: reader.readInt(),
+      addedDate: reader.read(),
+      coverImage: reader.readString(),
+      status: reader.readString(),
+      series: reader.readString(),
+      icon: reader.readString(),
+      backgroundImage: reader.readString(),
+      lastInteracted: reader.read(),
+      gameTime: reader.readInt(),
+      bookReadPages: reader.readInt(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Wishlist obj) {
-    writer.write(obj.media);
-    writer.write(obj.user);
+    writer.writeInt(obj.mediaId);
+    writer.writeInt(obj.userId);
+    writer.writeString(obj.name);
+    writer.writeInt(obj.userScore);
+    writer.write(obj.addedDate);
+    writer.writeString(obj.coverImage);
+    writer.writeString(obj.status);
+    writer.writeString(obj.series);
+    writer.writeString(obj.icon);
+    writer.writeString(obj.backgroundImage);
+    writer.write(obj.lastInteracted);
+    writer.writeInt(obj.gameTime);
+    writer.writeInt(obj.bookReadPages);
   }
 }

@@ -7,7 +7,7 @@ import 'package:email_validator/email_validator.dart';
 import 'dart:convert' show utf8;
 import '../Models/user.dart';
 import '../UserSystem.dart';
-import '../App.dart';
+import '../GameLibrary.dart';
 
 part 'login_event.dart';
 part 'login_state.dart';
@@ -59,7 +59,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         yield LoginSuccess();
         Navigator.pop(list[0] as BuildContext);
         Navigator.of(list[0] as BuildContext)
-            .push(MaterialPageRoute(builder: (context) => const MyApp()));
+            .push(MaterialPageRoute(builder: (context) => const GameLibrary()));
       } catch (error) {
         yield LoginFailure(error: error.toString());
       }
