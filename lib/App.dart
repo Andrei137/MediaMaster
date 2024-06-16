@@ -7,7 +7,6 @@ import 'package:pair/pair.dart';
 import 'dart:async';
 import 'API/general/ServiceHandler.dart';
 import 'API/general/ServiceBuilder.dart';
-import 'Utils.dart';
 import 'Main.dart';
 
 import 'Models/game.dart';
@@ -400,7 +399,9 @@ class MyAppState extends State<MyApp> {
                           onPressed: () async {
                             String query = searchController.text;
                             if (query.isNotEmpty) {
-                              searchResults = await _searchGame(query);
+                              ServiceBuilder.setIgdb();
+                              searchResults =
+                                  await ServiceHandler.getOptions(query);
                               setState(() {
                                 noSearch = searchResults
                                     .isEmpty; // Update noSearch flag
@@ -417,7 +418,7 @@ class MyAppState extends State<MyApp> {
                             children: [
                               const SizedBox(height: 2),
                               ...searchResults.map((result) {
-                                String gameName = result['title'];
+                                String gameName = result['name'];
 
                                 if (gameAlreadyInLibrary(gameName)) {
                                   return ListTile(
@@ -429,8 +430,7 @@ class MyAppState extends State<MyApp> {
                                       ),
                                     ),
                                     onTap: () {
-                                      // getInfo(gameIndex)
-                                      _addGame(gameName);
+                                      _addGame(result);
                                       Navigator.of(context).pop();
                                     },
                                   );
@@ -438,7 +438,7 @@ class MyAppState extends State<MyApp> {
                                   return ListTile(
                                     title: Text(gameName),
                                     onTap: () {
-                                      _addGame(gameName);
+                                      _addGame(result);
                                       Navigator.of(context).pop();
                                     },
                                   );
@@ -456,25 +456,6 @@ class MyAppState extends State<MyApp> {
         );
       },
     );
-  }
-
-  Future<List<dynamic>> _searchGame(String query) async {
-    final String url =
-        'https://www.pcgamingwiki.com/w/api.php?action=query&format=json&list=search&srsearch=${Utils.httpify(query)}';
-
-    try {
-      final http.Response response = await http.get(Uri.parse(url));
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        return data['query']['search'];
-      } else {
-        throw Exception('Failed to search for game: ${response.statusCode}');
-      }
-    } catch (error) {
-      print('Error searching game: $error');
-      return [];
-    }
   }
 
   Future<void> _showSortGamesDialog(BuildContext context) {
@@ -745,7 +726,7 @@ class MyAppState extends State<MyApp> {
                               ),
                             ],
                           ),
-                      ], // -------------------------------------------------------------------
+                      ],
                     ),
                   ),
                 ),
@@ -802,59 +783,175 @@ class MyAppState extends State<MyApp> {
     );
   }
 
-  Future<void> _addGame(String gameName) async {
+  Future<void> _addGame(Map<String, dynamic> result) async {
     if (UserSystem().currentUser == null) {
       return;
     }
 
-    Game? nullableGame = gameAlreadyInDB(gameName);
+    var selectedGame = await ServiceHandler.getInfo(result);
+    String name = selectedGame['name'];
+
+    if (name[name.length - 1] == ')' && name.length >= 7) {
+      name = name.substring(0, name.length - 7);
+    }
+
+    Game? nullableGame = gameAlreadyInDB(name);
+
+    // Get information from PCGamingWiki
+    ServiceBuilder.setPcGamingWiki();
+    var optionsPCGW = await ServiceHandler.getOptions(name);
+    Map<String, dynamic> resultPCGW = {};
+    if (optionsPCGW.isNotEmpty) {
+      // This is kind of a hack but we will do it legit in the future
+      resultPCGW = await ServiceHandler.getInfo(optionsPCGW[0]);
+    }
+    Map<String, dynamic> answersPCGW = {};
+    if (resultPCGW.containsKey('windows')) {
+      if (resultPCGW['windows'].containsKey('OS')) {
+        answersPCGW['OSMinimum'] = resultPCGW['windows']['OS']['minimum']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+        answersPCGW['OSRecommended'] = resultPCGW['windows']['OS']
+                ['recommended']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+      }
+      if (resultPCGW['windows'].containsKey('CPU')) {
+        answersPCGW['CPUMinimum'] = resultPCGW['windows']['CPU']['minimum']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+        answersPCGW['CPURecommended'] = resultPCGW['windows']['CPU']
+                ['recommended']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+      }
+      if (resultPCGW['windows'].containsKey('RAM')) {
+        answersPCGW['RAMMinimum'] = resultPCGW['windows']['RAM']['minimum']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+        answersPCGW['RAMRecommended'] = resultPCGW['windows']['RAM']
+                ['recommended']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+      }
+      if (resultPCGW['windows'].containsKey('HDD')) {
+        answersPCGW['HDDMinimum'] = resultPCGW['windows']['HDD']['minimum']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+        answersPCGW['HDDRecommended'] = resultPCGW['windows']['HDD']
+                ['recommended']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+      }
+      if (resultPCGW['windows'].containsKey('GPU')) {
+        answersPCGW['GPUMinimum'] = resultPCGW['windows']['GPU']['minimum']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+        answersPCGW['GPURecommended'] = resultPCGW['windows']['GPU']
+                ['recommended']
+            ?.replaceAll(RegExp(r'\s+'), ' ');
+      }
+    }
+
+    // Get information from HLTB
+    ServiceBuilder.setHowLongToBeat();
+    var optionsHLTB = await ServiceHandler.getOptions(name);
+    Map<String, dynamic> resultHLTB = {};
+    if (optionsHLTB.isNotEmpty) {
+      // This is kind of a hack but we will do it legit in the future
+      resultHLTB = await ServiceHandler.getInfo(optionsHLTB[0]);
+    }
+    Map<String, dynamic> answersHLTB = {};
+    if (resultHLTB.containsKey('Main Story')) {
+      answersHLTB['Main Story'] =
+          (double.parse(resultHLTB['Main Story'].split(' Hours')[0]) * 3600)
+              .round();
+    }
+    if (resultHLTB.containsKey('Main + Sides')) {
+      answersHLTB['Main + Sides'] =
+          (double.parse(resultHLTB['Main + Sides'].split(' Hours')[0]) * 3600)
+              .round();
+    }
+    if (resultHLTB.containsKey('Completionist')) {
+      answersHLTB['Completionist'] =
+          (double.parse(resultHLTB['Completionist'].split(' Hours')[0]) * 3600)
+              .round();
+    }
+    if (resultHLTB.containsKey('All Styles')) {
+      answersHLTB['All Styles'] =
+          (double.parse(resultHLTB['All Styles'].split(' Hours')[0]) * 3600)
+              .round();
+    }
+    if (resultHLTB.containsKey('Co-Op')) {
+      answersHLTB['Co-Op'] =
+          (double.parse(resultHLTB['Co-Op'].split(' Hours')[0]) * 3600).round();
+    }
+    if (resultHLTB.containsKey('Vs.')) {
+      answersHLTB['Vs.'] =
+          (double.parse(resultHLTB['Vs.'].split(' Hours')[0]) * 3600).round();
+    }
 
     if (nullableGame == null) {
       Media media = Media(
-        originalName: gameName,
-        description: "Add parameter/call to API for description here.",
+        originalName: name,
+        description: selectedGame['summary'],
         releaseDate:
-            DateTime.now() /*Add parameter/call to API for release date here.*/,
-        criticScore: -1 /*Add parameter/call to API for critic score here.*/,
-        communityScore:
-            -1 /*Add parameter/call to API for comunity score here.*/,
+            DateTime.now(), //selectedGame['first_release_date'] as DateTime,
+        criticScore: selectedGame['critic_rating'],
+        communityScore: selectedGame['user_rating'],
         mediaType: "Game",
       );
       Game newGame = Game(
         mediaId: media.id,
         parentGameId:
-            -1 /*Add parameter/call to API to check if this is a DLC*/,
-        OSMinimum:
-            "Minimum OS not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        OSRecommended:
-            "Recommended OS not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        CPUMinimum:
-            "Minimum CPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        CPURecommended:
-            "Recommended CPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        RAMMinimum:
-            "Minimum RAM not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        RAMRecommended:
-            "Recommended RAM not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        HDDMinimum:
-            "Minimum HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        HDDRecommended:
-            "Recommended HDD not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        GPUMinimum:
-            "Minimum GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        GPURecommended:
-            "Recommended GPU not implemented yet" /*Add parameter/call to System Requirement service API*/,
-        HLTBMainInSeconds:
-            3720 /*For testing purposes*/ /*Add parameter/call to HLTB service API*/,
-        HLTBMainSideInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBCompletionistInSeconds:
-            -1 /*Add parameter/call to HLTB service API*/,
-        HLTBAllStylesInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBSoloInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBCoopInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBVersusInSeconds: -1 /*Add parameter/call to HLTB service API*/,
-        HLTBSingleplayerInSeconds:
-            -1 /*Add parameter/call to HLTB service API*/,
+            -1 /*TODO in the next semester: Add parameter/call to API to check if this is a DLC*/,
+        OSMinimum: answersPCGW.containsKey('OSMinimum') &&
+                answersPCGW['OSMinimum'] != null
+            ? answersPCGW['OSMinimum']
+            : "N/A",
+        OSRecommended: answersPCGW.containsKey('OSRecommended') &&
+                answersPCGW['OSRecommended'] != null
+            ? answersPCGW['OSRecommended']
+            : "N/A",
+        CPUMinimum: answersPCGW.containsKey('CPUMinimum') &&
+                answersPCGW['CPUMinimum'] != null
+            ? answersPCGW['CPUMinimum']
+            : "N/A",
+        CPURecommended: answersPCGW.containsKey('CPURecommended') &&
+                answersPCGW['CPURecommended'] != null
+            ? answersPCGW['CPURecommended']
+            : "N/A",
+        RAMMinimum: answersPCGW.containsKey('RAMMinimum') &&
+                answersPCGW['RAMMinimum'] != null
+            ? answersPCGW['RAMMinimum']
+            : "N/A",
+        RAMRecommended: answersPCGW.containsKey('RAMRecommended') &&
+                answersPCGW['RAMRecommended'] != null
+            ? answersPCGW['RAMRecommended']
+            : "N/A",
+        HDDMinimum: answersPCGW.containsKey('HDDMinimum') &&
+                answersPCGW['HDDMinimum'] != null
+            ? answersPCGW['HDDMinimum']
+            : "N/A",
+        HDDRecommended: answersPCGW.containsKey('HDDRecommended') &&
+                answersPCGW['HDDRecommended'] != null
+            ? answersPCGW['HDDRecommended']
+            : "N/A",
+        GPUMinimum: answersPCGW.containsKey('GPUMinimum') &&
+                answersPCGW['GPUMinimum'] != null
+            ? answersPCGW['GPUMinimum']
+            : "N/A",
+        GPURecommended: answersPCGW.containsKey('GPURecommended') &&
+                answersPCGW['GPURecommended'] != null
+            ? answersPCGW['GPURecommended']
+            : "N/A",
+        HLTBMainInSeconds: answersHLTB.containsKey('Main Story')
+            ? answersHLTB['Main Story']
+            : -1,
+        HLTBMainSideInSeconds: answersHLTB.containsKey('Main + Sides')
+            ? answersHLTB['Main + Sides']
+            : -1,
+        HLTBCompletionistInSeconds: answersHLTB.containsKey('Completionist')
+            ? answersHLTB['Completionist']
+            : -1,
+        HLTBAllStylesInSeconds: answersHLTB.containsKey('All Styles')
+            ? answersHLTB['All Styles']
+            : -1,
+        HLTBCoopInSeconds:
+            answersHLTB.containsKey('Co-Op') ? answersHLTB['Co-Op'] : -1,
+        HLTBVersusInSeconds:
+            answersHLTB.containsKey('Vs.') ? answersHLTB['Vs.'] : -1,
       );
       await Hive.box<Media>('media').add(media);
       await Hive.box<Game>('games').add(newGame);
@@ -989,7 +1086,7 @@ class MyAppState extends State<MyApp> {
                       margin: const EdgeInsets.all(10),
                       child: IconButton(
                         onPressed: () {
-                          runSysCheck(game);
+                          _showSysCheck(game);
                         },
                         icon: const Icon(
                           Icons.monitor,
@@ -1095,8 +1192,16 @@ class MyAppState extends State<MyApp> {
     );
   }
 
-  void runSysCheck(Game game) {
-    // TODO: This function gets invoked by the system check button. For now, until we integrate some way of checking the system capabilities it will do nothing
+  Future<void> _showSysCheck(Game game) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('System requirements'),
+          content: game.renderPCGW(),
+        );
+      },
+    );
   }
 
   Future<void> _showGameSettingsDialog(Game game) {

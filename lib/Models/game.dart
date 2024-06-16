@@ -22,10 +22,8 @@ class Game extends HiveObject {
   int HLTBMainSideInSeconds;
   int HLTBCompletionistInSeconds;
   int HLTBAllStylesInSeconds;
-  int HLTBSoloInSeconds;
   int HLTBCoopInSeconds;
   int HLTBVersusInSeconds;
-  int HLTBSingleplayerInSeconds;
 
   // For ease of use
   Media? _media;
@@ -34,28 +32,27 @@ class Game extends HiveObject {
   // Automatic id generator
   static int nextId = 0;
 
-  Game(
-      {this.id = -1,
-      required this.mediaId,
-      this.parentGameId = -1,
-      required this.OSMinimum,
-      required this.OSRecommended,
-      required this.CPUMinimum,
-      required this.CPURecommended,
-      required this.RAMMinimum,
-      required this.RAMRecommended,
-      required this.HDDMinimum,
-      required this.HDDRecommended,
-      required this.GPUMinimum,
-      required this.GPURecommended,
-      this.HLTBMainInSeconds = -1,
-      this.HLTBMainSideInSeconds = -1,
-      this.HLTBCompletionistInSeconds = -1,
-      this.HLTBAllStylesInSeconds = -1,
-      this.HLTBSoloInSeconds = -1,
-      this.HLTBCoopInSeconds = -1,
-      this.HLTBVersusInSeconds = -1,
-      this.HLTBSingleplayerInSeconds = -1}) {
+  Game({
+    this.id = -1,
+    required this.mediaId,
+    this.parentGameId = -1,
+    required this.OSMinimum,
+    required this.OSRecommended,
+    required this.CPUMinimum,
+    required this.CPURecommended,
+    required this.RAMMinimum,
+    required this.RAMRecommended,
+    required this.HDDMinimum,
+    required this.HDDRecommended,
+    required this.GPUMinimum,
+    required this.GPURecommended,
+    this.HLTBMainInSeconds = -1,
+    this.HLTBMainSideInSeconds = -1,
+    this.HLTBCompletionistInSeconds = -1,
+    this.HLTBAllStylesInSeconds = -1,
+    this.HLTBCoopInSeconds = -1,
+    this.HLTBVersusInSeconds = -1,
+  }) {
     if (id == -1) {
       id = nextId;
     }
@@ -117,8 +114,6 @@ class Game extends HiveObject {
       HLTBCoopInSeconds,
       HLTBMainInSeconds,
       HLTBMainSideInSeconds,
-      HLTBSingleplayerInSeconds,
-      HLTBSoloInSeconds,
       HLTBVersusInSeconds
     ]);
     int minTime = -1;
@@ -135,10 +130,6 @@ class Game extends HiveObject {
   Widget renderHLTB() {
     String formatTime(int timeInSeconds,
         {bool days = false, bool seconds = false}) {
-      if (timeInSeconds < 0) {
-        return "Value missing. Contact an admin";
-      }
-
       String daysStr = "";
       if (days && timeInSeconds >= 60 * 60 * 24) {
         daysStr =
@@ -163,60 +154,149 @@ class Game extends HiveObject {
     }
 
     Widget formatHLTBRow(String title, int timeInSeconds) {
-      return Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              title,
-              textAlign: TextAlign.right,
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 2,
+              child: Text(
+                title,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              formatTime(timeInSeconds),
-              textAlign: TextAlign.left,
+            const SizedBox(width: 20),
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Text(
+                  formatTime(timeInSeconds),
+                  textAlign: TextAlign.left,
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        formatHLTBRow(
-          "Main: ",
-          HLTBMainInSeconds,
+        if (HLTBMainInSeconds > 0)
+          formatHLTBRow(
+            "Main: ",
+            HLTBMainInSeconds,
+          ),
+        if (HLTBMainSideInSeconds > 0)
+          formatHLTBRow(
+            "Main + Side: ",
+            HLTBMainSideInSeconds,
+          ),
+        if (HLTBCompletionistInSeconds > 0)
+          formatHLTBRow(
+            "Completionist: ",
+            HLTBCompletionistInSeconds,
+          ),
+        if (HLTBAllStylesInSeconds > 0)
+          formatHLTBRow(
+            "All styles: ",
+            HLTBAllStylesInSeconds,
+          ),
+        if (HLTBCoopInSeconds > 0)
+          formatHLTBRow(
+            "Coop: ",
+            HLTBCoopInSeconds,
+          ),
+        if (HLTBVersusInSeconds > 0)
+          formatHLTBRow(
+            "Versus",
+            HLTBVersusInSeconds,
+          ),
+      ],
+    );
+  }
+
+  Widget renderPCGW() {
+    Widget formatPCGWRow(String title, String details) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 2,
+              child: Text(
+                title,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Text(
+                  details,
+                  textAlign: TextAlign.left,
+                ),
+              ),
+            ),
+          ],
         ),
-        formatHLTBRow(
-          "Main + Side: ",
-          HLTBMainSideInSeconds,
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        formatPCGWRow(
+          "OS minimum: ",
+          OSMinimum,
         ),
-        formatHLTBRow(
-          "Completionist: ",
-          HLTBCompletionistInSeconds,
+        formatPCGWRow(
+          "OS recommended: ",
+          OSRecommended,
         ),
-        formatHLTBRow(
-          "All styles: ",
-          HLTBAllStylesInSeconds,
+        formatPCGWRow(
+          "CPU minimum: ",
+          CPUMinimum,
         ),
-        formatHLTBRow(
-          "Solo: ",
-          HLTBSoloInSeconds,
+        formatPCGWRow(
+          "CPU recommended: ",
+          CPURecommended,
         ),
-        formatHLTBRow(
-          "Coop: ",
-          HLTBCoopInSeconds,
+        formatPCGWRow(
+          "RAM minimum: ",
+          RAMMinimum,
         ),
-        formatHLTBRow(
-          "Versus",
-          HLTBVersusInSeconds,
+        formatPCGWRow(
+          "RAM recommended: ",
+          RAMRecommended,
         ),
-        formatHLTBRow(
-          "Singleplayer",
-          HLTBSingleplayerInSeconds,
+        formatPCGWRow(
+          "HDD minimum: ",
+          HDDMinimum,
+        ),
+        formatPCGWRow(
+          "HDD recommended: ",
+          HDDRecommended,
+        ),
+        formatPCGWRow(
+          "GPU minimum: ",
+          GPUMinimum,
+        ),
+        formatPCGWRow(
+          "GPU recommended: ",
+          GPURecommended,
         ),
       ],
     );
@@ -247,10 +327,8 @@ class GameAdapter extends TypeAdapter<Game> {
       HLTBMainSideInSeconds: reader.readInt(),
       HLTBCompletionistInSeconds: reader.readInt(),
       HLTBAllStylesInSeconds: reader.readInt(),
-      HLTBSoloInSeconds: reader.readInt(),
       HLTBCoopInSeconds: reader.readInt(),
       HLTBVersusInSeconds: reader.readInt(),
-      HLTBSingleplayerInSeconds: reader.readInt(),
     );
   }
 
@@ -273,9 +351,7 @@ class GameAdapter extends TypeAdapter<Game> {
     writer.writeInt(obj.HLTBMainSideInSeconds);
     writer.writeInt(obj.HLTBCompletionistInSeconds);
     writer.writeInt(obj.HLTBAllStylesInSeconds);
-    writer.writeInt(obj.HLTBSoloInSeconds);
     writer.writeInt(obj.HLTBCoopInSeconds);
     writer.writeInt(obj.HLTBVersusInSeconds);
-    writer.writeInt(obj.HLTBSingleplayerInSeconds);
   }
 }

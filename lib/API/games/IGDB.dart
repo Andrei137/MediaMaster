@@ -404,6 +404,9 @@ class IGDB implements Service {
     if (game['aggregated_rating'] != null) {
       game['critic_rating'] = (game['aggregated_rating']).round();
       game.remove('aggregated_rating');
+    } else {
+      game['critic_rating'] = 0;
+      game.remove('aggregated_rating');
     }
     if (game['artworks'] != null) {
       await _getArtworks(_accessToken, game);
@@ -437,6 +440,9 @@ class IGDB implements Service {
     }
     if (game['rating'] != null) {
       game['user_rating'] = (game['rating']).round();
+      game.remove('rating');
+    } else {
+      game['user_rating'] = 0;
       game.remove('rating');
     }
     if (game['websites'] != null) {
