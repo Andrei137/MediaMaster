@@ -47,6 +47,7 @@ dependencies:
   equatable: ^2.0.3
   email_validator: ^2.0.1
   test: ^1.24.9
+  adaptive_theme: ^3.4.0
 
 dev_dependencies:
   flutter_test:

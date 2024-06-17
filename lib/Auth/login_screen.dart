@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 
 import 'login_bloc.dart';
 
@@ -29,6 +30,17 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Log in Screen'),
+        actions: <Widget>[
+          IconButton(
+            onPressed: () {
+              AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                  ? AdaptiveTheme.of(context).setDark()
+                  : AdaptiveTheme.of(context).setLight();
+            },
+            icon: const Icon(Icons.dark_mode),
+            tooltip: 'Toggle dark mode',
+          ),
+        ],
       ),
       body: BlocListener<LoginBloc, LoginState>(
         listener: (context, state) {
@@ -53,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 500,
                       child: TextFormField(
                           controller: _emailController,
+                          cursorColor: const Color.fromARGB(219, 10, 94, 87),
                           decoration: const InputDecoration(
                             labelText: 'Email',
                           ),
@@ -68,6 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 500,
                       child: TextFormField(
                           controller: _passwordController,
+                          cursorColor: const Color.fromARGB(219, 10, 94, 87),
                           obscureText: true,
                           decoration: const InputDecoration(
                             labelText: 'Password',
@@ -105,7 +119,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (state is LoginLoading)
                       const Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(
+                            color: Color.fromARGB(219, 10, 94, 87)),
                       ),
                   ],
                 ),

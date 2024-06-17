@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'Models/seed_data.dart';
 import 'Models/database_adapters.dart';
 
@@ -12,17 +13,24 @@ void main() async {
   await initHiveAndAdapters();
   addSeedData();
 
-  runApp(
-    MaterialApp(
-      title: 'MediaMaster',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Color.fromARGB(219, 10, 94, 87),
-        ),
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return AdaptiveTheme(
+      light: ThemeData.light(useMaterial3: true),
+      dark: ThemeData.dark(useMaterial3: true),
+      initial: AdaptiveThemeMode.light,
+      builder: (theme, darkTheme) => MaterialApp(
+        title: 'MediaMaster',
+        theme: theme,
+        darkTheme: darkTheme,
+        home: const Home(),
       ),
-      home: const Home(),
-    ),
-  );
+    );
+  }
 }
 
 class Home extends StatefulWidget {
@@ -38,6 +46,17 @@ class HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home page'),
+        actions: <Widget>[
+          IconButton(
+            onPressed: () {
+              AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                  ? AdaptiveTheme.of(context).setDark()
+                  : AdaptiveTheme.of(context).setLight();
+            },
+            icon: const Icon(Icons.dark_mode),
+            tooltip: 'Toggle dark mode',
+          ),
+        ],
       ),
       body: Center(
         child: Row(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:mediamaster/Models/note.dart';
 import 'package:pair/pair.dart';
 import 'package:flutter/services.dart';
@@ -278,6 +279,7 @@ class MyWishlistState extends State<MyWishlist> {
 
     TextField textField = TextField(
       controller: searchController,
+      cursorColor: const Color.fromARGB(219, 10, 94, 87),
       onChanged: (value) {
         setState(() {});
       },
@@ -336,7 +338,10 @@ class MyWishlistState extends State<MyWishlist> {
                       ),
                       IconButton(
                         onPressed: () {
-                          _darkModeToggle(context);
+                          AdaptiveTheme.of(context).mode ==
+                                  AdaptiveThemeMode.light
+                              ? AdaptiveTheme.of(context).setDark()
+                              : AdaptiveTheme.of(context).setLight();
                         },
                         icon: const Icon(Icons.dark_mode),
                         tooltip: 'Toggle dark mode',
@@ -421,6 +426,7 @@ class MyWishlistState extends State<MyWishlist> {
                   children: [
                     TextField(
                       controller: searchController,
+                      cursorColor: const Color.fromARGB(219, 10, 94, 87),
                       decoration: InputDecoration(
                         labelText: 'Game Name',
                         suffixIcon: IconButton(
@@ -777,10 +783,6 @@ class MyWishlistState extends State<MyWishlist> {
             },
           );
         });
-  }
-
-  void _darkModeToggle(BuildContext context) {
-    // TODO: Implement this
   }
 
   Future<void> _showDeleteConfirmationDialog(

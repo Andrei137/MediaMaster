@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 
 import 'signup_bloc.dart';
 
@@ -33,6 +34,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sign up Screen'),
+        actions: <Widget>[
+          IconButton(
+            onPressed: () {
+              AdaptiveTheme.of(context).mode == AdaptiveThemeMode.light
+                  ? AdaptiveTheme.of(context).setDark()
+                  : AdaptiveTheme.of(context).setLight();
+            },
+            icon: const Icon(Icons.dark_mode),
+            tooltip: 'Toggle dark mode',
+          ),
+        ],
       ),
       body: BlocListener<SignUpBloc, SignUpState>(
         listener: (context, state) {
@@ -65,6 +77,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       width: 500,
                       child: TextFormField(
                           controller: _usernameController,
+                          cursorColor: const Color.fromARGB(219, 10, 94, 87),
                           decoration: const InputDecoration(
                             labelText: 'Username',
                           ),
@@ -80,6 +93,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       width: 500,
                       child: TextFormField(
                           controller: _emailController,
+                          cursorColor: const Color.fromARGB(219, 10, 94, 87),
                           decoration: const InputDecoration(
                             labelText: 'Email',
                           ),
@@ -95,6 +109,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       width: 500,
                       child: TextFormField(
                           controller: _passwordController,
+                          cursorColor: const Color.fromARGB(219, 10, 94, 87),
                           obscureText: true,
                           decoration: const InputDecoration(
                             labelText: 'Password',
@@ -114,6 +129,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       width: 500,
                       child: TextFormField(
                           controller: _confirmedPasswordController,
+                          cursorColor: const Color.fromARGB(219, 10, 94, 87),
                           obscureText: true,
                           decoration: const InputDecoration(
                             labelText: 'Confirm password',
@@ -154,7 +170,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     if (state is SignUpLoading)
                       const Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(
+                            color: Color.fromARGB(219, 10, 94, 87)),
                       ),
                   ],
                 ),
