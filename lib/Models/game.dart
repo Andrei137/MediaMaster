@@ -130,29 +130,11 @@ class Game extends HiveObject {
   }
 
   Widget renderHLTB() {
-    String formatTime(int timeInSeconds,
-        {bool days = false, bool seconds = false}) {
-      String daysStr = "";
-      if (days && timeInSeconds >= 60 * 60 * 24) {
-        daysStr =
-            "${timeInSeconds ~/ (60 * 60 * 24)} day${timeInSeconds ~/ (60 * 60 * 24) > 1 ? 's' : ''}, ";
-        timeInSeconds %= 60 * 60 * 24;
+    String formatTime(int timeInSeconds) {
+      if (timeInSeconds / (60 * 60) ==  timeInSeconds ~/ (60 * 60)) {
+        return "${timeInSeconds ~/ (60 * 60)} hour${timeInSeconds / (60 * 60) > 1 ? 's' : ''}";
       }
-
-      String hoursStr =
-          "${timeInSeconds ~/ (60 * 60)} hour${timeInSeconds ~/ (60 * 60) > 1 ? 's' : ''}, ";
-      timeInSeconds %= 60 * 60;
-
-      String minutesStr =
-          "${timeInSeconds ~/ 60} minute${timeInSeconds ~/ 60 > 1 ? 's' : ''}";
-      timeInSeconds %= 60;
-
-      String secondsStr = "";
-      if (seconds && timeInSeconds != 0) {
-        secondsStr = ", $timeInSeconds";
-      }
-
-      return "$daysStr$hoursStr$minutesStr$secondsStr";
+      return "${timeInSeconds / (60 * 60)} hour${timeInSeconds / (60 * 60) > 1 ? 's' : ''}";
     }
 
     Widget formatHLTBRow(String title, int timeInSeconds) {
@@ -192,32 +174,32 @@ class Game extends HiveObject {
       children: [
         if (HLTBMainInSeconds > 0)
           formatHLTBRow(
-            "Main: ",
+            "Main",
             HLTBMainInSeconds,
           ),
         if (HLTBMainSideInSeconds > 0)
           formatHLTBRow(
-            "Main + Side: ",
+            "Main + Side",
             HLTBMainSideInSeconds,
           ),
         if (HLTBCompletionistInSeconds > 0)
           formatHLTBRow(
-            "Completionist: ",
+            "Completionist",
             HLTBCompletionistInSeconds,
           ),
         if (HLTBAllStylesInSeconds > 0)
           formatHLTBRow(
-            "All styles: ",
+            "All styles",
             HLTBAllStylesInSeconds,
           ),
         if (HLTBCoopInSeconds > 0)
           formatHLTBRow(
-            "Coop: ",
+            "Co-op",
             HLTBCoopInSeconds,
           ),
         if (HLTBVersusInSeconds > 0)
           formatHLTBRow(
-            "Versus: ",
+            "Versus",
             HLTBVersusInSeconds,
           ),
       ],
@@ -261,43 +243,43 @@ class Game extends HiveObject {
       mainAxisSize: MainAxisSize.min,
       children: [
         formatPCGWRow(
-          "OS minimum: ",
+          "OS minimum",
           OSMinimum,
         ),
         formatPCGWRow(
-          "OS recommended: ",
+          "OS recommended",
           OSRecommended,
         ),
         formatPCGWRow(
-          "CPU minimum: ",
+          "CPU minimum",
           CPUMinimum,
         ),
         formatPCGWRow(
-          "CPU recommended: ",
+          "CPU recommended",
           CPURecommended,
         ),
         formatPCGWRow(
-          "RAM minimum: ",
+          "RAM minimum",
           RAMMinimum,
         ),
         formatPCGWRow(
-          "RAM recommended: ",
+          "RAM recommended",
           RAMRecommended,
         ),
         formatPCGWRow(
-          "HDD minimum: ",
+          "HDD minimum",
           HDDMinimum,
         ),
         formatPCGWRow(
-          "HDD recommended: ",
+          "HDD recommended",
           HDDRecommended,
         ),
         formatPCGWRow(
-          "GPU minimum: ",
+          "GPU minimum",
           GPUMinimum,
         ),
         formatPCGWRow(
-          "GPU recommended: ",
+          "GPU recommended",
           GPURecommended,
         ),
       ],

@@ -887,7 +887,7 @@ class GameLibraryState extends State<GameLibrary> {
 
     // Get information from HLTB
     ServiceBuilder.setHowLongToBeat();
-    var optionsHLTB = await ServiceHandler.getOptions(name);
+    var optionsHLTB = await ServiceHandler.getOptions(selectedGame['name']);
     Map<String, dynamic> resultHLTB = {};
     if (optionsHLTB.isNotEmpty) {
       // This is kind of a hack but we will do it legit in the future
@@ -928,8 +928,9 @@ class GameLibraryState extends State<GameLibrary> {
         originalName: name,
         description:
             selectedGame['summary'] ?? "There is no summary for this game.",
-        releaseDate:
-            DateTime.now(), //selectedGame['first_release_date'] as DateTime,
+        releaseDate: selectedGame['first_release_date'] != null
+            ? selectedGame['first_release_date'] as DateTime 
+            : DateTime(1800),
         criticScore: selectedGame['critic_rating'] != 0
             ? selectedGame['critic_rating']
             : 0,
@@ -1330,9 +1331,11 @@ class GameLibraryState extends State<GameLibrary> {
                         margin: const EdgeInsets.all(10),
                         child: Column(
                           children: [
+                            game.media.getReleaseDateWidget(),
                             game.media.getPublishersWidget(),
                             game.media.getCreatorsWidget(),
                             game.media.getPlatformsWidget(),
+                            game.media.getRatingsWidget()
                           ],
                         ),
                       ),

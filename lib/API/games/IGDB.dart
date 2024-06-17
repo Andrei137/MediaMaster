@@ -359,7 +359,7 @@ class IGDB implements Service {
 
             // Format the date as a string, removing the time
             games[i]['first_release_date'] =
-                games[i]['first_release_date'].toString().substring(0, 10);
+                DateTime.parse(games[i]['first_release_date'].toString().substring(0, 10));
           }
           if (games[i]['summary'] != null) {
             games[i]['summary'] =

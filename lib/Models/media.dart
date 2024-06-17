@@ -176,6 +176,13 @@ class Media extends HiveObject {
     );
   }
 
+  Widget getReleaseDateWidget() {
+    if (releaseDate == DateTime(1800)) {
+      return getListWidget('Release Date', List.of(["N/A"]));
+    }
+    return getListWidget('Release Date', List.of([releaseDate.toString().substring(0, 10)]));
+  }
+
   Widget getPublishersWidget() {
     var pubs = publishers.map((pub) => pub.name).toList();
     return getListWidget('Publisher${pubs.length <= 1 ? "" : "s"}', pubs.isEmpty ? List.of(["N/A"]) : pubs);
@@ -189,6 +196,26 @@ class Media extends HiveObject {
   Widget getPlatformsWidget() {
     var plts = platforms.map((plt) => plt.name).toList();
     return getListWidget('Platform${plts.length <= 1 ? "" : "s"}', plts.isEmpty ? List.of(["N/A"]) : plts);
+  }
+
+  Widget getRatingsWidget() {
+    String criticScoreString = "Critic score: ";
+    if (criticScore != 0) {
+      criticScoreString += criticScore.toString();
+    }
+    else {
+      criticScoreString += "N/A";
+    }
+
+    String communityScoreString = "Community score: ";
+    if (communityScore != 0) {
+      communityScoreString += communityScore.toString();
+    }
+    else {
+      communityScoreString += "N/A";
+    }
+
+    return getListWidget('Ratings', List.of([criticScoreString, communityScoreString]));
   }
 }
 
