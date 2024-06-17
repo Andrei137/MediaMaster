@@ -27,6 +27,8 @@ class Media extends HiveObject {
   // Automatic id generator
   static int nextId = 0;
 
+  static const TextStyle textStyle = TextStyle(color: Colors.white);
+
   Media(
       {this.id = -1,
       required this.originalName,
@@ -85,28 +87,6 @@ class Media extends HiveObject {
     return ans;
   }
 
-  Widget getPublishersWidget() {
-    var pubs = publishers;
-
-    return Column(
-      children: [
-        Text(
-          'Publisher${pubs.length <= 1 ? "" : "s"}:',
-          style: const TextStyle(
-            color: Colors.white,
-          ),
-        ),
-        for (var pub in pubs)
-          Text(
-            pub.name,
-            style: const TextStyle(
-              color: Colors.white,
-            ),
-          ),
-      ],
-    );
-  }
-
   List<Creator> get creators {
     List<Creator> ans = List.empty(growable: true);
 
@@ -117,28 +97,6 @@ class Media extends HiveObject {
     }
 
     return ans;
-  }
-
-  Widget getCreatorsWidget() {
-    var crts = creators;
-
-    return Column(
-      children: [
-        Text(
-          'Creator${crts.length <= 1 ? "" : "s"}:',
-          style: const TextStyle(
-            color: Colors.white,
-          ),
-        ),
-        for (var crt in crts)
-          Text(
-            crt.name,
-            style: const TextStyle(
-              color: Colors.white,
-            ),
-          ),
-      ],
-    );
   }
 
   List<Platform> get platforms {
@@ -153,26 +111,84 @@ class Media extends HiveObject {
     return ans;
   }
 
-  Widget getPlatformsWidget() {
-    var plts = platforms;
+  Widget getListWidget(String title, List<String> items) {
+    final ScrollController scrollController = ScrollController();
 
-    return Column(
-      children: [
-        Text(
-          'Platform${plts.length <= 1 ? "" : "s"}:',
-          style: const TextStyle(
-            color: Colors.white,
-          ),
-        ),
-        for (var plt in plts)
-          Text(
-            plt.name,
-            style: const TextStyle(
-              color: Colors.white,
+    return Card(
+      color: Colors.grey[850],
+      margin: const EdgeInsets.all(8.0),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: textStyle.copyWith(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-      ],
+            SizedBox(height: 4),
+            Container(
+              constraints: const BoxConstraints(
+                maxHeight: 70.0,
+              ),
+              child: RawScrollbar(
+                controller: scrollController,
+                thumbColor: Colors.white,
+                radius: const Radius.circular(8.0),
+                thickness: 6.0,
+                thumbVisibility: true,
+                child: ListView.builder(
+                  controller: scrollController,
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2.0),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.label,
+                            color: Colors.white70,
+                            size: 14,
+                          ),
+                          SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              items[index],
+                              style: textStyle.copyWith(
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  Widget getPublishersWidget() {
+    var pubs = publishers.map((pub) => pub.name).toList();
+    return getListWidget('Publisher${pubs.length <= 1 ? "" : "s"}', pubs.isEmpty ? List.of(["N/A"]) : pubs);
+  }
+
+  Widget getCreatorsWidget() {
+    var crts = creators.map((crt) => crt.name).toList();
+    return getListWidget('Creator${crts.length <= 1 ? "" : "s"}', crts.isEmpty ? List.of(["N/A"]) : crts);
+  }
+
+  Widget getPlatformsWidget() {
+    var plts = platforms.map((plt) => plt.name).toList();
+    return getListWidget('Platform${plts.length <= 1 ? "" : "s"}', plts.isEmpty ? List.of(["N/A"]) : plts);
   }
 }
 

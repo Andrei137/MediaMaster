@@ -20,8 +20,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AdaptiveTheme(
-      light: ThemeData.light(useMaterial3: true),
-      dark: ThemeData.dark(useMaterial3: true),
+      light: ThemeData.light().copyWith(
+        useMaterial3: true,
+        colorScheme: ColorScheme.light(primary: const Color.fromARGB(219, 10, 94, 87)),
+      ),
+      dark: ThemeData.dark().copyWith(
+        useMaterial3: true,
+        colorScheme: ColorScheme.dark(primary: const Color.fromARGB(219, 10, 94, 87)),
+      ),
       initial: AdaptiveThemeMode.light,
       builder: (theme, darkTheme) => MaterialApp(
         title: 'MediaMaster',

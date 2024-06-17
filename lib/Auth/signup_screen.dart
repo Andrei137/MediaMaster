@@ -77,7 +77,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       width: 500,
                       child: TextFormField(
                           controller: _usernameController,
-                          cursorColor: const Color.fromARGB(219, 10, 94, 87),
                           decoration: const InputDecoration(
                             labelText: 'Username',
                           ),
@@ -93,7 +92,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       width: 500,
                       child: TextFormField(
                           controller: _emailController,
-                          cursorColor: const Color.fromARGB(219, 10, 94, 87),
                           decoration: const InputDecoration(
                             labelText: 'Email',
                           ),
@@ -109,7 +107,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       width: 500,
                       child: TextFormField(
                           controller: _passwordController,
-                          cursorColor: const Color.fromARGB(219, 10, 94, 87),
                           obscureText: true,
                           decoration: const InputDecoration(
                             labelText: 'Password',
@@ -129,7 +126,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       width: 500,
                       child: TextFormField(
                           controller: _confirmedPasswordController,
-                          cursorColor: const Color.fromARGB(219, 10, 94, 87),
                           obscureText: true,
                           decoration: const InputDecoration(
                             labelText: 'Confirm password',

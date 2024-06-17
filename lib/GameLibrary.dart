@@ -281,7 +281,6 @@ class GameLibraryState extends State<GameLibrary> {
 
     TextField textField = TextField(
       controller: searchController,
-      cursorColor: const Color.fromARGB(219, 10, 94, 87),
       onChanged: (value) {
         setState(() {});
       },
@@ -428,7 +427,6 @@ class GameLibraryState extends State<GameLibrary> {
                   children: [
                     TextField(
                       controller: searchController,
-                      cursorColor: const Color.fromARGB(219, 10, 94, 87),
                       decoration: InputDecoration(
                         labelText: 'Game Name',
                         suffixIcon: IconButton(
@@ -1003,99 +1001,105 @@ class GameLibraryState extends State<GameLibrary> {
       );
 
       // get the publishers of the game
-      List<dynamic> gamePublishers = selectedGame['publishers'];
-      List<Publisher> newPublishers = List.empty(growable: true);
-      Box<Publisher> publishers = Hive.box<Publisher>('publishers');
-      Box<MediaPublisher> mediaPublishers =
-          Hive.box<MediaPublisher>('media-publishers');
+      if(selectedGame['publishers'] != null) {
+        List<dynamic> gamePublishers = selectedGame['publishers'];
+        List<Publisher> newPublishers = List.empty(growable: true);
+        Box<Publisher> publishers = Hive.box<Publisher>('publishers');
+        Box<MediaPublisher> mediaPublishers =
+            Hive.box<MediaPublisher>('media-publishers');
 
-      for (dynamic publisher in gamePublishers) {
-        bool check = true;
-        for (int i = 0; i < publishers.length; i++) {
-          // if the creator exists in the DB, add a new entry to MediaPublisher
-          if (publishers.getAt(i)!.name == publisher.toString()) {
-            check = false;
-            mediaPublishers.add(MediaPublisher(
-              mediaId: media.id,
-              publisherId: publishers.getAt(i)!.id,
-            ));
+        for (dynamic publisher in gamePublishers) {
+          bool check = true;
+          for (int i = 0; i < publishers.length; i++) {
+            // if the creator exists in the DB, add a new entry to MediaPublisher
+            if (publishers.getAt(i)!.name == publisher.toString()) {
+              check = false;
+              mediaPublishers.add(MediaPublisher(
+                mediaId: media.id,
+                publisherId: publishers.getAt(i)!.id,
+              ));
+            }
+          }
+          // add the new creator to the newPublishers list in order to add it to the DB later
+          if (check == true) {
+            newPublishers.add(Publisher(name: publisher.toString()));
           }
         }
-        // add the new creator to the newPublishers list in order to add it to the DB later
-        if (check == true) {
-          newPublishers.add(Publisher(name: publisher.toString()));
+
+        // add the new creators to the DB and add new entries to MediaPublisher
+        for (Publisher publisher in newPublishers) {
+          publishers.add(publisher);
+          mediaPublishers
+              .add(MediaPublisher(mediaId: media.id, publisherId: publisher.id));
         }
       }
 
-      // add the new creators to the DB and add new entries to MediaPublisher
-      for (Publisher publisher in newPublishers) {
-        publishers.add(publisher);
-        mediaPublishers
-            .add(MediaPublisher(mediaId: media.id, publisherId: publisher.id));
-      }
+      if(selectedGame['developers'] != null) {
+        // get the developers of the game
+        List<dynamic> gameCreators = selectedGame['developers'];
+        List<Creator> newCreators = List.empty(growable: true);
+        Box<Creator> creators = Hive.box<Creator>('creators');
+        Box<MediaCreator> mediaCreators =
+            Hive.box<MediaCreator>('media-creators');
 
-      // get the developers of the game
-      List<dynamic> gameCreators = selectedGame['developers'];
-      List<Creator> newCreators = List.empty(growable: true);
-      Box<Creator> creators = Hive.box<Creator>('creators');
-      Box<MediaCreator> mediaCreators =
-          Hive.box<MediaCreator>('media-creators');
-
-      for (dynamic creator in gameCreators) {
-        bool check = true;
-        for (int i = 0; i < creators.length; i++) {
-          // if the creator exists in the DB, add a new entry to MediaCreator
-          if (creators.getAt(i)!.name == creator.toString()) {
-            check = false;
-            mediaCreators.add(MediaCreator(
-              mediaId: media.id,
-              creatorId: creators.getAt(i)!.id,
-            ));
+        for (dynamic creator in gameCreators) {
+          bool check = true;
+          for (int i = 0; i < creators.length; i++) {
+            // if the creator exists in the DB, add a new entry to MediaCreator
+            if (creators.getAt(i)!.name == creator.toString()) {
+              check = false;
+              mediaCreators.add(MediaCreator(
+                mediaId: media.id,
+                creatorId: creators.getAt(i)!.id,
+              ));
+            }
+          }
+          // add the new creator to the newCreators list in order to add it to the DB later
+          if (check == true) {
+            newCreators.add(Creator(name: creator.toString()));
           }
         }
-        // add the new creator to the newCreators list in order to add it to the DB later
-        if (check == true) {
-          newCreators.add(Creator(name: creator.toString()));
+
+        // add the new creators to the DB and add new entries to MediaCreator
+        for (Creator creator in newCreators) {
+          creators.add(creator);
+          mediaCreators
+              .add(MediaCreator(mediaId: media.id, creatorId: creator.id));
         }
       }
 
-      // add the new creators to the DB and add new entries to MediaCreator
-      for (Creator creator in newCreators) {
-        creators.add(creator);
-        mediaCreators
-            .add(MediaCreator(mediaId: media.id, creatorId: creator.id));
-      }
+      if(selectedGame['platforms'] != null) {
+        // get the platforms of the game
+        List<dynamic> gamePlatforms = selectedGame['platforms'];
+        List<Platform> newPlatforms = List.empty(growable: true);
+        Box<Platform> platforms = Hive.box<Platform>('platforms');
+        Box<MediaPlatform> mediaPlatforms =
+            Hive.box<MediaPlatform>('media-platforms');
 
-      // get the platforms of the game
-      List<dynamic> gamePlatforms = selectedGame['platforms'];
-      List<Platform> newPlatforms = List.empty(growable: true);
-      Box<Platform> platforms = Hive.box<Platform>('platforms');
-      Box<MediaPlatform> mediaPlatforms =
-          Hive.box<MediaPlatform>('media-platforms');
-
-      for (dynamic platform in gamePlatforms) {
-        bool check = true;
-        for (int i = 0; i < platforms.length; i++) {
-          // if the creator exists in the DB, add a new entry to MediaPlatform
-          if (platforms.getAt(i)!.name == platform.toString()) {
-            check = false;
-            mediaPlatforms.add(MediaPlatform(
-              mediaId: media.id,
-              platformId: platforms.getAt(i)!.id,
-            ));
+        for (dynamic platform in gamePlatforms) {
+          bool check = true;
+          for (int i = 0; i < platforms.length; i++) {
+            // if the creator exists in the DB, add a new entry to MediaPlatform
+            if (platforms.getAt(i)!.name == platform.toString()) {
+              check = false;
+              mediaPlatforms.add(MediaPlatform(
+                mediaId: media.id,
+                platformId: platforms.getAt(i)!.id,
+              ));
+            }
+          }
+          // add the new creator to the newPlatformss list in order to add it to the DB later
+          if (check == true) {
+            newPlatforms.add(Platform(name: platform.toString()));
           }
         }
-        // add the new creator to the newPlatformss list in order to add it to the DB later
-        if (check == true) {
-          newPlatforms.add(Platform(name: platform.toString()));
-        }
-      }
 
-      // add the new creators to the DB and add new entries to MediaPublisher
-      for (Platform platform in newPlatforms) {
-        platforms.add(platform);
-        mediaPlatforms
-            .add(MediaPlatform(mediaId: media.id, platformId: platform.id));
+        // add the new creators to the DB and add new entries to MediaPublisher
+        for (Platform platform in newPlatforms) {
+          platforms.add(platform);
+          mediaPlatforms
+              .add(MediaPlatform(mediaId: media.id, platformId: platform.id));
+        }
       }
 
       await Hive.box<Media>('media').add(media);
@@ -1112,12 +1116,12 @@ class GameLibraryState extends State<GameLibrary> {
         name: game.media.originalName,
         userScore: -1,
         addedDate: DateTime.now(),
-        coverImage: selectedGame["cover"],
+        coverImage: selectedGame["cover"] == null ? '//static.vecteezy.com/system/resources/previews/016/916/479/original/placeholder-icon-design-free-vector.jpg' : selectedGame["cover"],
         status: "Plan To Play",
         series:
             game.media.originalName /*Add parameter/call to game series API*/,
-        icon: selectedGame["cover"],
-        backgroundImage: selectedGame["artworks"][0],
+        icon: selectedGame["cover"] == null ? '//static.vecteezy.com/system/resources/previews/016/916/479/original/placeholder-icon-design-free-vector.jpg' : selectedGame["cover"],
+        backgroundImage: selectedGame["artworks"] == null ? '//static.vecteezy.com/system/resources/previews/016/916/479/original/placeholder-icon-design-free-vector.jpg' : selectedGame["artworks"][0],
         lastInteracted: DateTime.now(),
       );
 

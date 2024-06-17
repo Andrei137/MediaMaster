@@ -217,7 +217,7 @@ class Game extends HiveObject {
           ),
         if (HLTBVersusInSeconds > 0)
           formatHLTBRow(
-            "Versus",
+            "Versus: ",
             HLTBVersusInSeconds,
           ),
       ],
