@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:mediamaster/Models/note.dart';
 import 'package:pair/pair.dart';
 import 'package:flutter/services.dart';
@@ -24,6 +25,7 @@ import 'Models/wishlist.dart';
 
 import 'UserSystem.dart';
 import 'MyWishlist.dart';
+import 'Main.dart';
 
 class GameLibrary extends StatefulWidget {
   const GameLibrary({super.key});
@@ -279,6 +281,7 @@ class GameLibraryState extends State<GameLibrary> {
 
     TextField textField = TextField(
       controller: searchController,
+      cursorColor: const Color.fromARGB(219, 10, 94, 87),
       onChanged: (value) {
         setState(() {});
       },
@@ -293,27 +296,21 @@ class GameLibraryState extends State<GameLibrary> {
       appBar: AppBar(
         title: const Text('MediaMaster'),
         actions: [
-          IconButton(
-            onPressed: () {
-              _darkModeToggle(context);
-            },
-            icon: const Icon(Icons.dark_mode),
-            tooltip: 'Toggle dark mode',
-          ),
-          IconButton(
-            onPressed: () {
-              _showSettingsDialog(context);
-            },
-            icon: const Icon(Icons.settings),
-            tooltip: 'Settings',
-          ),
-          Text(
-            UserSystem().currentUser!.username,
+          TextButton(
+            onPressed: () {}, // TO DO: profile page
+            style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all<Color>(
+                  const Color.fromARGB(219, 10, 94, 87)),
+              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+            ),
+            child: Text(UserSystem().currentUser!.username),
           ),
           IconButton(
               onPressed: () {
                 UserSystem().logout();
                 Navigator.pop(context);
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const Home()));
               },
               icon: const Icon(Icons.logout),
               tooltip: 'Log out')
@@ -340,6 +337,16 @@ class GameLibraryState extends State<GameLibrary> {
                         },
                         icon: const Icon(Icons.filter_alt),
                         tooltip: 'Filter games',
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          AdaptiveTheme.of(context).mode ==
+                                  AdaptiveThemeMode.light
+                              ? AdaptiveTheme.of(context).setDark()
+                              : AdaptiveTheme.of(context).setLight();
+                        },
+                        icon: const Icon(Icons.dark_mode),
+                        tooltip: 'Toggle dark mode',
                       ),
                       TextButton(
                         onPressed: () {
@@ -421,6 +428,7 @@ class GameLibraryState extends State<GameLibrary> {
                   children: [
                     TextField(
                       controller: searchController,
+                      cursorColor: const Color.fromARGB(219, 10, 94, 87),
                       decoration: InputDecoration(
                         labelText: 'Game Name',
                         suffixIcon: IconButton(
@@ -777,14 +785,6 @@ class GameLibraryState extends State<GameLibrary> {
             },
           );
         });
-  }
-
-  void _darkModeToggle(BuildContext context) {
-    // TODO: Implement this
-  }
-
-  void _showSettingsDialog(BuildContext context) {
-    // TODO: Implement this
   }
 
   Future<void> _showDeleteConfirmationDialog(

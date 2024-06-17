@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart' as path_provider;
 import 'app_achievement.dart';
 import 'book.dart';
 import 'creator.dart';
@@ -29,7 +32,12 @@ import 'user_achievement.dart';
 import 'wishlist.dart';
 
 Future<void> initHiveAndAdapters() async {
-  await Hive.initFlutter();
+  // Obtain a directory where Hive should store its files
+  final appDocumentDir = await path_provider.getApplicationDocumentsDirectory();
+  Directory DBDir =
+      await Directory('${appDocumentDir.path}\\MediaMasterDB').create();
+
+  await Hive.initFlutter(DBDir.path);
 
   Hive.registerAdapter(AppAchievementAdapter());
   Hive.registerAdapter(BookAdapter());
